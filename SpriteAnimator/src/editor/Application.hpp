@@ -24,6 +24,7 @@ namespace px
 		void update(sf::Time dt);
 		void updateGUI();
 		void render();
+		void drawGrid();
 
 	private:
 		// Test functionality for animations
@@ -43,5 +44,6 @@ namespace px
 		Animator m_animator;
 		sf::Sprite m_sprite;
 		sf::Texture m_spriteTexture;
+		sf::Vector2f m_selectedTile;
 	};
 }
