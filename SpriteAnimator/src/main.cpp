@@ -7,6 +7,5 @@ int main()
 {
 	px::Application app;
 	app.run();
-
 	return 0;
 }
