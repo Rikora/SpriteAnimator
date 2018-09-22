@@ -9,15 +9,18 @@
 
 namespace px
 {
+	bool Application::m_showSpriteSheet = true;
+
 	Application::Application() :
 	m_window(
-	sf::VideoMode(1200U, 800U), 
+	sf::VideoMode(1440U, 900U), 
 	"Sprite Animator", 
 	sf::Style::Close, 
 	sf::ContextSettings(0U, 0U, 8U)),
 	m_animator(m_animations),
 	m_selectedTile(0.f, 0.f)
 	{
+		m_window.setPosition(sf::Vector2i(225, 90));
 		m_window.setVerticalSyncEnabled(true);
 		ImGui::SFML::Init(m_window);
 
@@ -67,9 +70,12 @@ namespace px
 
 	void Application::updateGUI()
 	{	
-		ImGui::Begin("Animator", NULL, ImVec2(0, 0), 1.0f, ImGuiWindowFlags_NoMove);
-		drawGrid();
-		ImGui::End();
+		if (m_showSpriteSheet)
+		{
+			ImGui::Begin("Sprite sheet", &m_showSpriteSheet, ImVec2(0, 0), 1.0f, ImGuiWindowFlags_NoMove);
+			drawGrid();
+			ImGui::End();
+		}
 	}
 
 	void Application::render()
@@ -88,7 +94,7 @@ namespace px
 		// Draw grid
 		auto draw_list = ImGui::GetWindowDrawList();
 		const auto tileSize = 64.f;
-		const auto xTiles = m_spriteTexture.getSize().x / (unsigned)tileSize; // Need to round this in the future
+		const auto xTiles = m_spriteTexture.getSize().x / (unsigned)tileSize;
 		const auto yTiles = m_spriteTexture.getSize().y / (unsigned)tileSize;
 
 		// Draw horizontal lines

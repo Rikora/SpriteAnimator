@@ -45,5 +45,8 @@ namespace px
 		sf::Sprite m_sprite;
 		sf::Texture m_spriteTexture;
 		sf::Vector2f m_selectedTile;
+
+	private:
+		static bool m_showSpriteSheet;
 	};
 }
