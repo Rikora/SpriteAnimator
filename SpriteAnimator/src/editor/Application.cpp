@@ -34,6 +34,21 @@ namespace px
 		m_spriteTexture.loadFromFile("src/res/sprites/orc.png");
 		m_sprite.setTexture(m_spriteTexture);
 
+		// Fill the vector
+		const auto rows = m_spriteTexture.getSize().x / 64;
+		const auto cols = m_spriteTexture.getSize().y / 64;
+		unsigned index = 0;
+
+		for (unsigned row = 0; row < rows; ++row)
+		{
+			for (unsigned col = 0; col < cols; ++col)
+			{
+				m_tiles.push_back({ "image" + std::to_string(index), 
+									sf::FloatRect(static_cast<float>(col * 64), static_cast<float>(row * 64), 64.f, 64.f) });
+				index++;
+			}
+		}
+
 		// Test animations
 		addAnimation("walk", 11, 9);
 		playAnimation("walk", true);
@@ -120,10 +135,10 @@ namespace px
 			{
 				auto relMousePos = sf::Vector2f(ImGui::GetMousePos()) - tilesetImagePos;
 				m_selectedTile = sf::Vector2f(std::floor(relMousePos.x / tileSize) * tileSize, std::floor(relMousePos.y / tileSize) * tileSize);
+				auto const index = static_cast<unsigned>(std::floor(relMousePos.x / tileSize) + std::floor(relMousePos.y / tileSize) * xTiles);
+				std::cout << m_tiles[index].name << std::endl;
 			}
 		}
-
-		//const auto tileRect = sf::FloatRect(m_selectedTile.x, m_selectedTile.y, tileSize, tileSize);
 		
 		// Highlight selected tile on spritesheet
 		sf::Vector2f selectedTileTL = sf::Vector2f(m_selectedTile.x, m_selectedTile.y);

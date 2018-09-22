@@ -38,6 +38,13 @@ namespace px
 		using Animator = thor::Animator<sf::Sprite, std::string>;
 
 	private:
+		struct TileInfo
+		{
+			std::string name;
+			sf::FloatRect tile;
+		};
+
+	private:
 		sf::RenderWindow m_window;
 		thor::ActionMap<std::string> m_actions;
 		AnimationsHolder m_animations;
@@ -45,7 +52,8 @@ namespace px
 		sf::Sprite m_sprite;
 		sf::Texture m_spriteTexture;
 		sf::Vector2f m_selectedTile;
-
+		std::vector<TileInfo> m_tiles;
+		
 	private:
 		static bool m_showSpriteSheet;
 	};
