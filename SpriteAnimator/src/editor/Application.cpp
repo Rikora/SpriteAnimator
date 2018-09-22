@@ -39,12 +39,16 @@ namespace px
 		const auto cols = m_spriteTexture.getSize().y / 64;
 		unsigned index = 0;
 
-		for (unsigned row = 0; row < rows; ++row)
+		// Allocate size
+		m_tiles.resize(cols * rows);
+
+		for (unsigned y = 0; y < cols; ++y)
 		{
-			for (unsigned col = 0; col < cols; ++col)
+			for (unsigned x = 0; x < rows; ++x)
 			{
-				m_tiles.push_back({ "image" + std::to_string(index), 
-									sf::FloatRect(static_cast<float>(col * 64), static_cast<float>(row * 64), 64.f, 64.f) });
+				// Change this to index [] later on...
+				m_tiles[index] = { "image" + std::to_string(index), 
+									sf::FloatRect(static_cast<float>(x * 64), static_cast<float>(y * 64), 64.f, 64.f) };
 				index++;
 			}
 		}
@@ -87,7 +91,7 @@ namespace px
 	{	
 		if (m_showSpriteSheet)
 		{
-			ImGui::Begin("Sprite sheet", &m_showSpriteSheet, ImVec2(0, 0), 1.0f, ImGuiWindowFlags_NoMove);
+			ImGui::Begin("Sprite sheet", &m_showSpriteSheet, ImVec2(0, 0), 1.f, ImGuiWindowFlags_NoMove);
 			drawGrid();
 			ImGui::End();
 		}
@@ -103,6 +107,8 @@ namespace px
 
 	void Application::drawGrid()
 	{
+		static unsigned index = 0;
+		static std::vector<char> spriteName(50);
 		const sf::Vector2f tilesetImagePos = ImGui::GetCursorScreenPos();
 		ImGui::Image(m_spriteTexture);
 
@@ -135,11 +141,29 @@ namespace px
 			{
 				auto relMousePos = sf::Vector2f(ImGui::GetMousePos()) - tilesetImagePos;
 				m_selectedTile = sf::Vector2f(std::floor(relMousePos.x / tileSize) * tileSize, std::floor(relMousePos.y / tileSize) * tileSize);
-				auto const index = static_cast<unsigned>(std::floor(relMousePos.x / tileSize) + std::floor(relMousePos.y / tileSize) * xTiles);
-				std::cout << m_tiles[index].name << std::endl;
+				index = static_cast<unsigned>(std::floor(relMousePos.x / tileSize) + std::floor(relMousePos.y / tileSize) * xTiles);
+
+				// Copy name to vector as the default buffer size is too small
+				spriteName.clear();
+				spriteName.resize(50);
+				for (unsigned i = 0; i < m_tiles[index].name.size(); ++i)
+					spriteName[i] = m_tiles[index].name[i];
 			}
 		}
-		
+
+		// Show info about selected tile
+		ImGui::Begin("Sprite", NULL, ImVec2(0, 0), 1.f, ImGuiWindowFlags_NoMove);
+		ImGui::Text("Name:");
+		ImGui::SameLine();
+
+		if (ImGui::InputText("", spriteName.data(), spriteName.size(), ImGuiInputTextFlags_EnterReturnsTrue))
+		{
+			m_tiles[index].name = spriteName.data();
+		}
+
+		ImGui::Text("Tile: %d, %d", (int)m_tiles[index].tile.left, (int)m_tiles[index].tile.top);
+		ImGui::End();
+	
 		// Highlight selected tile on spritesheet
 		sf::Vector2f selectedTileTL = sf::Vector2f(m_selectedTile.x, m_selectedTile.y);
 		sf::Vector2f selectedTileBR = sf::Vector2f(m_selectedTile.x + tileSize + 1.f, m_selectedTile.y + tileSize + 1.f);
