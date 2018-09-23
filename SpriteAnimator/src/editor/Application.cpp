@@ -19,7 +19,7 @@ namespace px
 	"Sprite Animator", 
 	sf::Style::Close, 
 	sf::ContextSettings(0U, 0U, 8U)),
-	m_animator(m_animations),
+	m_animator(m_spriteAnimations),
 	m_selectedTile(0.f, 0.f),
 	m_tileSize(0, 0)
 	{
@@ -50,7 +50,7 @@ namespace px
 		{
 			for (unsigned x = 0; x < rows; ++x)
 			{
-				m_tiles[index] = { "image" + std::to_string(index), 
+				m_tiles.at(index) = { "image" + std::to_string(index), 
 									sf::FloatRect(static_cast<float>(x * 64), static_cast<float>(y * 64), 64.f, 64.f) };
 				index++;
 			}
@@ -92,8 +92,8 @@ namespace px
 
 	void Application::updateGUI()
 	{
-		static int floatPrecision = 3;
 		static int animationIndex = 0;
+		static float duration = 1.f;
 
 		if (ImGui::BeginMainMenuBar())
 		{
@@ -104,17 +104,33 @@ namespace px
 
 			ImGui::Begin("Animator", NULL, ImVec2(0, 0), 1.f, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | 
 															  ImGuiWindowFlags_NoBringToFrontOnFocus);
-			
-			// List for different animation images?
-			if (ImGui::Combo("Sprite##1", &animationIndex, m_tiles))
-			{
 
+			// Note: This can't be done before one has chosen a sprite sheet...
+			// Should be able to swap places between animations?
+			ImGui::Spacing();
+			ImGui::Text("Animation: Idle");
+			ImGui::SameLine(ImGui::GetWindowWidth() - 35);
+			ImGui::Button("X", ImVec2(20, 20)); // Remove animation
+			addAnimationsToGUI();
+			ImGui::Spacing();
+			ImGui::Separator();
+			ImGui::Spacing();
+			ImGui::Text("Add frame...");
+			ImGui::SameLine(ImGui::GetWindowWidth() - 35);
+			if (ImGui::Button("+", ImVec2(20, 20)))
+			{
+				m_animations.push_back({});
 			}
-	
+			ImGui::Spacing();
+			ImGui::Separator();
+			ImGui::Spacing();
+			ImGui::Text("New animation..."); // Add animation...
+			ImGui::Spacing();
+			ImGui::Separator();
 			ImGui::Spacing();
 
 			// Properties for sprite sheet
-			ImGui::SetNextTreeNodeOpen(true);
+			//ImGui::SetNextTreeNodeOpen(true);
 			if (ImGui::CollapsingHeader("Sprite Sheet"))
 			{
 				ImGui::Spacing();
@@ -168,6 +184,37 @@ namespace px
 		m_window.display();
 	}
 
+	void Application::addAnimationsToGUI()
+	{
+		unsigned int i = 1;
+		for (auto& frame : m_animations)
+		{
+			ImGui::Spacing();
+			ImGui::Separator();
+			ImGui::Spacing();
+			ImGui::PushID(i);
+
+			// Choose sprite image
+			if (ImGui::Combo("Sprite", &frame.spriteIndex, m_tiles))
+			{
+
+			}
+			ImGui::SameLine(ImGui::GetWindowWidth() - 35);
+
+			// Remove frame
+			if (ImGui::Button("X", ImVec2(20, 20)))
+			{
+				m_animations.erase(m_animations.begin() + (i - 1));
+			}
+
+			ImGui::Spacing();
+			ImGui::InputFloat("Duration", &frame.duration, 0.1f);
+			utils::constrainNegativesFloat(frame.duration);
+			ImGui::PopID();
+			i++;
+		}
+	}
+
 	void Application::drawGrid()
 	{
 		static unsigned index = 0;
@@ -210,7 +257,7 @@ namespace px
 				spriteName.clear();
 				spriteName.resize(50);
 				for (unsigned i = 0; i < m_tiles[index].name.size(); ++i)
-					spriteName[i] = m_tiles[index].name[i];
+					spriteName.at(i) = m_tiles[index].name[i];
 			}
 		}
 
@@ -221,10 +268,10 @@ namespace px
 
 		if (ImGui::InputText("", spriteName.data(), spriteName.size(), ImGuiInputTextFlags_EnterReturnsTrue))
 		{
-			m_tiles[index].name = spriteName.data();
+			m_tiles.at(index).name = spriteName.data();
 		}
 
-		ImGui::Text("Tile: %d, %d", (int)m_tiles[index].tile.left, (int)m_tiles[index].tile.top);
+		ImGui::Text("Tile: %d, %d", (int)m_tiles.at(index).tile.left, (int)m_tiles.at(index).tile.top);
 		ImGui::End();
 	
 		// Highlight selected tile on spritesheet
@@ -267,7 +314,7 @@ namespace px
 	void Application::addAnimation(const std::string& id, int row, int frames, sf::Time duration)
 	{
 		thor::FrameAnimation frameAnim;
-		m_animations.addAnimation(id, addFrames(frameAnim, row, frames), duration);
+		m_spriteAnimations.addAnimation(id, addFrames(frameAnim, row, frames), duration);
 	}
 
 	void Application::playAnimation(const std::string& id, bool repeat)

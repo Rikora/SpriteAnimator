@@ -26,6 +26,7 @@ namespace px
 		void updateGUI();
 		void render();
 		void drawGrid();
+		void addAnimationsToGUI();
 
 	private:
 		// Test functionality for animations
@@ -39,14 +40,22 @@ namespace px
 		using Animator = thor::Animator<sf::Sprite, std::string>;
 
 	private:
+		struct AnimationInfo
+		{
+			int spriteIndex = 0;
+			float duration = 1.f;
+		};
+
+	private:
 		sf::RenderWindow m_window;
 		sf::Vector2f m_selectedTile;
 		std::vector<TileInfo> m_tiles;
+		std::vector<AnimationInfo> m_animations;
 		sf::Vector2i m_tileSize;
 
 	private:
 		thor::ActionMap<std::string> m_actions;
-		AnimationsHolder m_animations;
+		AnimationsHolder m_spriteAnimations;
 		Animator m_animator;
 		sf::Sprite m_sprite;
 		sf::Texture m_spritesheet;
