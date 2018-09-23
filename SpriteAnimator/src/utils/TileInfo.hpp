@@ -1,0 +1,16 @@
+#pragma once
+
+////////////////////////////////////////////////////////////
+// Headers
+////////////////////////////////////////////////////////////
+#include <SFML/Graphics/Rect.hpp>
+#include <string>
+
+namespace px
+{
+	struct TileInfo
+	{
+		std::string name;
+		sf::FloatRect tile;
+	};
+}

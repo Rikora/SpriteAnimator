@@ -27,6 +27,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\editor\Application.hpp" />
+    <ClInclude Include="src\utils\imguiSTL.hpp" />
+    <ClInclude Include="src\utils\TileInfo.hpp" />
     <ClInclude Include="src\utils\Utility.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

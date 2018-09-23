@@ -4,6 +4,7 @@
 // Headers
 ////////////////////////////////////////////////////////////
 #include <SFML/Graphics.hpp>
+#include <utils/TileInfo.hpp>
 #include <Thor/Input/ActionMap.hpp>
 #include <Thor/Animations/Animator.hpp>
 #include <Thor/Animations/FrameAnimation.hpp>
@@ -28,21 +29,14 @@ namespace px
 
 	private:
 		// Test functionality for animations
-		thor::FrameAnimation addFrames(thor::FrameAnimation & anim, int row, int frames, int pxSize = 64, float duration = 1.f);
-		void addAnimation(const std::string & id, int row, int frames, sf::Time duration = sf::seconds(1.f));
-		void playAnimation(const std::string & id, bool repeat = false);
+		thor::FrameAnimation addFrames(thor::FrameAnimation& anim, int row, int frames, int pxSize = 64, float duration = 1.f);
+		void addAnimation(const std::string& id, int row, int frames, sf::Time duration = sf::seconds(1.f));
+		void playAnimation(const std::string& id, bool repeat = false);
 		void updateAnimation(sf::Time dt);
 
 	private:
 		using AnimationsHolder = thor::AnimationMap<sf::Sprite, std::string>;
 		using Animator = thor::Animator<sf::Sprite, std::string>;
-
-	private:
-		struct TileInfo
-		{
-			std::string name;
-			sf::FloatRect tile;
-		};
 
 	private:
 		sf::RenderWindow m_window;

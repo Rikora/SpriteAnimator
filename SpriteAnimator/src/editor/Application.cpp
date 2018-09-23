@@ -3,6 +3,7 @@
 ////////////////////////////////////////////////////////////
 #include <editor/Application.hpp>
 #include <utils/Utility.hpp>
+#include <utils/imguiSTL.hpp>
 #include <SFML/Window/Event.hpp>
 #include <imgui.h>
 #include <imgui-SFML.h>
@@ -92,6 +93,7 @@ namespace px
 	void Application::updateGUI()
 	{
 		static int floatPrecision = 3;
+		static int animationIndex = 0;
 
 		if (ImGui::BeginMainMenuBar())
 		{
@@ -102,6 +104,13 @@ namespace px
 
 			ImGui::Begin("Animator", NULL, ImVec2(0, 0), 1.f, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | 
 															  ImGuiWindowFlags_NoBringToFrontOnFocus);
+			
+			// List for different animation images?
+			if (ImGui::Combo("Sprite##1", &animationIndex, m_tiles))
+			{
+
+			}
+	
 			ImGui::Spacing();
 
 			// Properties for sprite sheet
@@ -119,7 +128,7 @@ namespace px
 				
 				if (ImGui::Button("Open texture.."))
 				{
-
+					// TODO: Add functionality to open a texture
 				}
 
 				ImGui::SameLine();
@@ -240,7 +249,7 @@ namespace px
 		}
 	}
 
-	thor::FrameAnimation Application::addFrames(thor::FrameAnimation & anim, int row, int frames, int pxSize, float duration)
+	thor::FrameAnimation Application::addFrames(thor::FrameAnimation& anim, int row, int frames, int pxSize, float duration)
 	{
 		// Row -> y
 		// Frames -> x
@@ -255,13 +264,13 @@ namespace px
 		return anim;
 	}
 
-	void Application::addAnimation(const std::string & id, int row, int frames, sf::Time duration)
+	void Application::addAnimation(const std::string& id, int row, int frames, sf::Time duration)
 	{
 		thor::FrameAnimation frameAnim;
 		m_animations.addAnimation(id, addFrames(frameAnim, row, frames), duration);
 	}
 
-	void Application::playAnimation(const std::string & id, bool repeat)
+	void Application::playAnimation(const std::string& id, bool repeat)
 	{
 		repeat ? m_animator.play() << id << thor::Playback::loop(id) : m_animator.play();
 	}
