@@ -2,6 +2,7 @@
 // Headers
 ////////////////////////////////////////////////////////////
 #include <editor/Application.hpp>
+#include <utils/Utility.hpp>
 #include <SFML/Window/Event.hpp>
 #include <imgui.h>
 #include <imgui-SFML.h>
@@ -9,7 +10,7 @@
 
 namespace px
 {
-	bool Application::m_showSpriteSheet = true;
+	bool Application::m_showSpriteSheet = false;
 
 	Application::Application() :
 	m_window(
@@ -18,7 +19,8 @@ namespace px
 	sf::Style::Close, 
 	sf::ContextSettings(0U, 0U, 8U)),
 	m_animator(m_animations),
-	m_selectedTile(0.f, 0.f)
+	m_selectedTile(0.f, 0.f),
+	m_tileSize(0, 0)
 	{
 		m_window.setPosition(sf::Vector2i(225, 90));
 		m_window.setVerticalSyncEnabled(true);
@@ -35,6 +37,7 @@ namespace px
 		m_sprite.setTexture(m_spriteTexture);
 
 		// Fill the vector
+		// Tile size should be specified by the user!
 		const auto rows = m_spriteTexture.getSize().x / 64;
 		const auto cols = m_spriteTexture.getSize().y / 64;
 		unsigned index = 0;
@@ -46,7 +49,6 @@ namespace px
 		{
 			for (unsigned x = 0; x < rows; ++x)
 			{
-				// Change this to index [] later on...
 				m_tiles[index] = { "image" + std::to_string(index), 
 									sf::FloatRect(static_cast<float>(x * 64), static_cast<float>(y * 64), 64.f, 64.f) };
 				index++;
@@ -88,12 +90,43 @@ namespace px
 	}
 
 	void Application::updateGUI()
-	{	
-		if (m_showSpriteSheet)
+	{
+		static int floatPrecision = 3;
+
+		if (ImGui::BeginMainMenuBar())
 		{
-			ImGui::Begin("Sprite sheet", &m_showSpriteSheet, ImVec2(0, 0), 1.f, ImGuiWindowFlags_NoMove);
-			drawGrid();
+			if (ImGui::BeginMenu("File"))
+			{
+				ImGui::EndMenu();
+			}
+
+			ImGui::Begin("Animator");
+			ImGui::Spacing();
+
+			// Properties for sprite sheet
+			ImGui::SetNextTreeNodeOpen(true);
+			if (ImGui::CollapsingHeader("Sprite Sheet"))
+			{
+				ImGui::Spacing();
+				ImGui::InputInt2("Tile size", &m_tileSize.x);
+				ImGui::Spacing();
+
+				utils::constrainNegativesVec(m_tileSize);
+			}
+
+			ImGui::Spacing();
 			ImGui::End();
+
+			// Sprite sheet
+			if (m_showSpriteSheet)
+			{
+				ImGui::Begin("Sprite sheet", &m_showSpriteSheet, ImVec2(0, 0), 1.f, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
+					ImGuiWindowFlags_HorizontalScrollbar);
+				drawGrid();
+				ImGui::End();
+			}
+
+			ImGui::EndMainMenuBar();
 		}
 	}
 
@@ -152,7 +185,7 @@ namespace px
 		}
 
 		// Show info about selected tile
-		ImGui::Begin("Sprite", NULL, ImVec2(0, 0), 1.f, ImGuiWindowFlags_NoMove);
+		ImGui::Begin("Sprite", NULL, ImVec2(0, 0), 1.f, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
 		ImGui::Text("Name:");
 		ImGui::SameLine();
 

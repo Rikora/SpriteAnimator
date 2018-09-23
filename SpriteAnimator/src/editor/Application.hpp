@@ -46,13 +46,16 @@ namespace px
 
 	private:
 		sf::RenderWindow m_window;
+		sf::Vector2f m_selectedTile;
+		std::vector<TileInfo> m_tiles;
+		sf::Vector2i m_tileSize;
+
+	private:
 		thor::ActionMap<std::string> m_actions;
 		AnimationsHolder m_animations;
 		Animator m_animator;
 		sf::Sprite m_sprite;
 		sf::Texture m_spriteTexture;
-		sf::Vector2f m_selectedTile;
-		std::vector<TileInfo> m_tiles;
 		
 	private:
 		static bool m_showSpriteSheet;
