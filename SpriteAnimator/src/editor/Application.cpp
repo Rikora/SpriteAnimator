@@ -33,13 +33,13 @@ namespace px
 		m_actions["close"] = eventClosed || close;
 
 		// Load textures (should not be here later...)
-		m_spriteTexture.loadFromFile("src/res/sprites/orc.png");
-		m_sprite.setTexture(m_spriteTexture);
+		m_spritesheet.loadFromFile("src/res/sprites/orc.png");
+		m_sprite.setTexture(m_spritesheet);
 
 		// Fill the vector
 		// Tile size should be specified by the user!
-		const auto rows = m_spriteTexture.getSize().x / 64;
-		const auto cols = m_spriteTexture.getSize().y / 64;
+		const auto rows = m_spritesheet.getSize().x / 64;
+		const auto cols = m_spritesheet.getSize().y / 64;
 		unsigned index = 0;
 
 		// Allocate size
@@ -100,7 +100,8 @@ namespace px
 				ImGui::EndMenu();
 			}
 
-			ImGui::Begin("Animator");
+			ImGui::Begin("Animator", NULL, ImVec2(0, 0), 1.f, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | 
+															  ImGuiWindowFlags_NoBringToFrontOnFocus);
 			ImGui::Spacing();
 
 			// Properties for sprite sheet
@@ -110,8 +111,28 @@ namespace px
 				ImGui::Spacing();
 				ImGui::InputInt2("Tile size", &m_tileSize.x);
 				ImGui::Spacing();
-
 				utils::constrainNegativesVec(m_tileSize);
+
+				ImGui::Spacing();
+				ImGui::Image(m_spritesheet, sf::Vector2f(300.f, 300.f), sf::Color::White, sf::Color::White);
+				ImGui::Spacing();
+				
+				if (ImGui::Button("Open texture.."))
+				{
+
+				}
+
+				ImGui::SameLine();
+
+				if (ImGui::Button("Edit sprite sheet"))
+				{
+					// The texture must have been loaded first
+					if (m_spritesheet.getSize().x > 0 && m_spritesheet.getSize().y > 0)
+					{
+						m_showSpriteSheet = true;
+					}
+				}
+				ImGui::Spacing();
 			}
 
 			ImGui::Spacing();
@@ -121,7 +142,7 @@ namespace px
 			if (m_showSpriteSheet)
 			{
 				ImGui::Begin("Sprite sheet", &m_showSpriteSheet, ImVec2(0, 0), 1.f, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
-					ImGuiWindowFlags_HorizontalScrollbar);
+																			        ImGuiWindowFlags_HorizontalScrollbar);
 				drawGrid();
 				ImGui::End();
 			}
@@ -143,13 +164,13 @@ namespace px
 		static unsigned index = 0;
 		static std::vector<char> spriteName(50);
 		const sf::Vector2f tilesetImagePos = ImGui::GetCursorScreenPos();
-		ImGui::Image(m_spriteTexture);
+		ImGui::Image(m_spritesheet);
 
 		// Draw grid
 		auto draw_list = ImGui::GetWindowDrawList();
 		const auto tileSize = 64.f;
-		const auto xTiles = m_spriteTexture.getSize().x / (unsigned)tileSize;
-		const auto yTiles = m_spriteTexture.getSize().y / (unsigned)tileSize;
+		const auto xTiles = m_spritesheet.getSize().x / (unsigned)tileSize;
+		const auto yTiles = m_spritesheet.getSize().y / (unsigned)tileSize;
 
 		// Draw horizontal lines
 		for (unsigned x = 0; x < xTiles + 1; ++x) 

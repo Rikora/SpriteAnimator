@@ -55,8 +55,8 @@ namespace px
 		AnimationsHolder m_animations;
 		Animator m_animator;
 		sf::Sprite m_sprite;
-		sf::Texture m_spriteTexture;
-		
+		sf::Texture m_spritesheet;
+
 	private:
 		static bool m_showSpriteSheet;
 	};
