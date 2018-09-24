@@ -51,6 +51,7 @@ namespace px
 		sf::Vector2f m_selectedTile;
 		std::vector<TileInfo> m_tiles;
 		std::vector<AnimationInfo> m_animations;
+		//std::vector<thor::FrameAnimation> m_frameAnimations;
 		sf::Vector2i m_tileSize;
 
 	private:

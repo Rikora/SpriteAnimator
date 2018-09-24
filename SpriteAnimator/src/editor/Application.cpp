@@ -108,14 +108,14 @@ namespace px
 			// Note: This can't be done before one has chosen a sprite sheet...
 			// Should be able to swap places between animations?
 			ImGui::Spacing();
-			ImGui::Text("Animation: Idle");
+			ImGui::Text("Animation: Idle"); // Change this for real animations...
 			ImGui::SameLine(ImGui::GetWindowWidth() - 35);
 			ImGui::Button("X", ImVec2(20, 20)); // Remove animation
 			addAnimationsToGUI();
 			ImGui::Spacing();
 			ImGui::Separator();
 			ImGui::Spacing();
-			ImGui::Text("Add frame...");
+			ImGui::Text("\t\t\t\tAdd animation frame..");
 			ImGui::SameLine(ImGui::GetWindowWidth() - 35);
 			if (ImGui::Button("+", ImVec2(20, 20)))
 			{
@@ -124,10 +124,30 @@ namespace px
 			ImGui::Spacing();
 			ImGui::Separator();
 			ImGui::Spacing();
-			ImGui::Text("New animation..."); // Add animation...
+			ImGui::Spacing();
+			ImGui::SameLine(ImGui::GetWindowWidth() - 230);
+			ImGui::Button("SUBMIT");
 			ImGui::Spacing();
 			ImGui::Separator();
 			ImGui::Spacing();
+
+			ImGui::SetNextTreeNodeOpen(true);
+			if (ImGui::CollapsingHeader("Animations"))
+			{
+				ImGui::Spacing();
+				ImGui::Text("Current animations: 1");
+				ImGui::SameLine(ImGui::GetWindowWidth() - 40);
+				ImGui::Button("NEW");
+				ImGui::Spacing();
+				ImGui::Separator();
+				ImGui::Spacing();
+				ImGui::Text("Idle");
+				ImGui::SameLine(ImGui::GetWindowWidth() - 35);
+				ImGui::Button("X", ImVec2(20, 20)); // Remove animation
+				ImGui::Spacing();
+				ImGui::Separator();
+				ImGui::Spacing();
+			}
 
 			// Properties for sprite sheet
 			//ImGui::SetNextTreeNodeOpen(true);
@@ -207,6 +227,8 @@ namespace px
 				m_animations.erase(m_animations.begin() + (i - 1));
 			}
 
+			//anim.addFrame(duration, sf::IntRect(frames * pxSize, row * pxSize, pxSize, pxSize));
+
 			ImGui::Spacing();
 			ImGui::InputFloat("Duration", &frame.duration, 0.1f);
 			utils::constrainNegativesFloat(frame.duration);
@@ -225,8 +247,8 @@ namespace px
 		// Draw grid
 		auto draw_list = ImGui::GetWindowDrawList();
 		const auto tileSize = 64.f;
-		const auto xTiles = m_spritesheet.getSize().x / (unsigned)tileSize;
-		const auto yTiles = m_spritesheet.getSize().y / (unsigned)tileSize;
+		const auto xTiles = m_spritesheet.getSize().x / static_cast<unsigned>(tileSize);
+		const auto yTiles = m_spritesheet.getSize().y / static_cast<unsigned>(tileSize);
 
 		// Draw horizontal lines
 		for (unsigned x = 0; x < xTiles + 1; ++x) 
@@ -271,7 +293,7 @@ namespace px
 			m_tiles.at(index).name = spriteName.data();
 		}
 
-		ImGui::Text("Tile: %d, %d", (int)m_tiles.at(index).tile.left, (int)m_tiles.at(index).tile.top);
+		ImGui::Text("Tile: %d, %d", static_cast<int>(m_tiles.at(index).tile.left), static_cast<int>(m_tiles.at(index).tile.top));
 		ImGui::End();
 	
 		// Highlight selected tile on spritesheet
@@ -300,7 +322,6 @@ namespace px
 	{
 		// Row -> y
 		// Frames -> x
-
 		// Remove loop for editor purpose?
 		if (frames > 1)
 			for (int i = 0; i < frames * pxSize; i += pxSize)
