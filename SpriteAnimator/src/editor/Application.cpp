@@ -50,7 +50,7 @@ namespace px
 		{
 			for (unsigned x = 0; x < rows; ++x)
 			{
-				m_tiles.at(index) = { "image" + std::to_string(index), 
+				m_tiles[index] = { "image" + std::to_string(index), 
 									sf::FloatRect(static_cast<float>(x * 64), static_cast<float>(y * 64), 64.f, 64.f) };
 				index++;
 			}
@@ -279,7 +279,7 @@ namespace px
 				spriteName.clear();
 				spriteName.resize(50);
 				for (unsigned i = 0; i < m_tiles[index].name.size(); ++i)
-					spriteName.at(i) = m_tiles[index].name[i];
+					spriteName[i] = m_tiles[index].name[i];
 			}
 		}
 
@@ -290,10 +290,10 @@ namespace px
 
 		if (ImGui::InputText("", spriteName.data(), spriteName.size(), ImGuiInputTextFlags_EnterReturnsTrue))
 		{
-			m_tiles.at(index).name = spriteName.data();
+			m_tiles[index].name = spriteName.data();
 		}
 
-		ImGui::Text("Tile: %d, %d", static_cast<int>(m_tiles.at(index).tile.left), static_cast<int>(m_tiles.at(index).tile.top));
+		ImGui::Text("Tile: %d, %d", static_cast<int>(m_tiles[index].tile.left), static_cast<int>(m_tiles[index].tile.top));
 		ImGui::End();
 	
 		// Highlight selected tile on spritesheet
