@@ -223,96 +223,99 @@ namespace px
 		unsigned int i = 1;
 		for (auto& animation : m_animations)
 		{
-			if (!animation.second.submitted)
+			ImGui::Spacing();
+			ImGui::Text("Animation: %s", animation.first.c_str());
+			ImGui::PushID(i);
+			ImGui::SameLine(ImGui::GetWindowWidth() - 35);
+
+			// Remove animation
+			if (ImGui::Button("X", ImVec2(20, 20)))
+			{
+				m_animations.erase(animation.first);
+				ImGui::PopID();
+				return;
+			}
+
+			ImGui::Spacing();
+			ImGui::InputFloat("Duration", &animation.second.duration, 0.1f);
+			utils::constrainNegativesFloat(animation.second.duration);
+
+			unsigned int p = 1;
+			for (auto& frame : animation.second.framesDetail)
 			{
 				ImGui::Spacing();
-				ImGui::Text("Animation: %s", animation.first.c_str());
-				ImGui::PushID(i);
+				ImGui::Separator();
+				ImGui::Spacing();
+				ImGui::PushID(p);
+
+				// Update sprite index for frame animation
+				ImGui::Combo("Sprite", &frame.spriteIndex, m_tiles);
 				ImGui::SameLine(ImGui::GetWindowWidth() - 35);
 
-				// Remove animation
+				// Remove frame
 				if (ImGui::Button("X", ImVec2(20, 20)))
 				{
-					m_animations.erase(animation.first);
-					ImGui::PopID();
-					return;
+					animation.second.framesDetail.erase(animation.second.framesDetail.begin() + (p - 1));
 				}
 
 				ImGui::Spacing();
-				ImGui::InputFloat("Duration", &animation.second.duration, 0.1f);
-				utils::constrainNegativesFloat(animation.second.duration);
+				ImGui::InputFloat("Duration", &frame.duration, 0.1f); // Note: This is a relative duration compared to the animation duration
+				utils::constrainNegativesFloat(frame.duration);
+				ImGui::PopID();
+				p++;
+			}
 
-				unsigned int p = 1;
-				for (auto& frame : animation.second.framesDetail)
+			ImGui::Spacing();
+			ImGui::Separator();
+			ImGui::Spacing();
+			ImGui::Text("\t\t\t\tAdd frame animation..");
+			ImGui::SameLine(ImGui::GetWindowWidth() - 35);
+
+			// Add frame animation
+			if (ImGui::Button("+", ImVec2(20, 20)))
+			{
+				animation.second.framesDetail.push_back({});
+			}
+
+			ImGui::Spacing();
+			ImGui::Separator();
+			ImGui::Spacing();
+			ImGui::Spacing();
+			ImGui::SameLine(ImGui::GetWindowWidth() - 230);
+
+			if (ImGui::Button("SUBMIT"))
+			{
+				if (!animation.second.framesDetail.empty())
 				{
-					ImGui::Spacing();
-					ImGui::Separator();
-					ImGui::Spacing();
-					ImGui::PushID(p);
+					// Clear the frame animation object when submitting again for new changes to take place
+					if (animation.second.submitted)
+						animation.second.frameAnimation = thor::FrameAnimation();
 
-					// Update sprite index for frame animation
-					ImGui::Combo("Sprite", &frame.spriteIndex, m_tiles);
-					ImGui::SameLine(ImGui::GetWindowWidth() - 35);
-
-					// Remove frame
-					if (ImGui::Button("X", ImVec2(20, 20)))
+					// Supply info to the frame animations vector
+					for (unsigned i = 0; i < animation.second.framesDetail.size(); ++i)
 					{
-						animation.second.framesDetail.erase(animation.second.framesDetail.begin() + (p - 1));
+						addFrameAnimation(animation.second.frameAnimation,
+							m_tiles[animation.second.framesDetail[i].spriteIndex].tile,
+							animation.second.framesDetail[i].duration);
 					}
 
-					ImGui::Spacing();
-					ImGui::InputFloat("Duration", &frame.duration, 0.1f); // Note: This is a relative duration compared to the animation duration
-					utils::constrainNegativesFloat(frame.duration);
-					ImGui::PopID();
-					p++;
-				}
-
-				ImGui::Spacing();
-				ImGui::Separator();
-				ImGui::Spacing();
-				ImGui::Text("\t\t\t\tAdd frame animation..");
-				ImGui::SameLine(ImGui::GetWindowWidth() - 35);
-
-				// Add frame animation
-				if (ImGui::Button("+", ImVec2(20, 20)))
-				{
-					animation.second.framesDetail.push_back({});
-				}
-
-				ImGui::Spacing();
-				ImGui::Separator();
-				ImGui::Spacing();
-				ImGui::Spacing();
-				ImGui::SameLine(ImGui::GetWindowWidth() - 230);
-
-				// TOOD: Animation should be removed from the preview when submitted
-				// But the user should also be able to tweak the animation parameters after submission...
-				if (ImGui::Button("SUBMIT"))
-				{
-					if (!animation.second.framesDetail.empty())
+					// Add the final animation to the container
+					if (!animation.second.submitted)
 					{
-						// Supply info to the frame animations vector
-						for (unsigned i = 0; i < animation.second.framesDetail.size(); ++i)
-						{
-							addFrameAnimation(animation.second.frameAnimation,
-								m_tiles[animation.second.framesDetail[i].spriteIndex].tile,
-								animation.second.framesDetail[i].duration);
-						}
-
-						// Add the final animation to the container
+						// No way to change the duration of the animation later on?
 						addAnimation(animation.first, animation.second.frameAnimation, animation.second.duration);
 						playAnimation(animation.first, true);
 						animation.second.submitted = true;
 						m_animationCount++;
 					}
 				}
-
-				ImGui::Spacing();
-				ImGui::Separator();
-				ImGui::Spacing();
-				ImGui::PopID();
-				i++;
 			}
+
+			ImGui::Spacing();
+			ImGui::Separator();
+			ImGui::Spacing();
+			ImGui::PopID();
+			i++;
 		}
 	}
 
@@ -386,7 +389,7 @@ namespace px
 
 	void Application::addAnimation(const std::string& id, const thor::FrameAnimation& anim, float duration)
 	{
-		m_spriteAnimations.addAnimation(id, anim, sf::seconds(duration));
+		m_spriteAnimations.addAnimation(id, thor::refAnimation(anim), sf::seconds(duration));
 	}
 
 	void Application::addFrameAnimation(thor::FrameAnimation& anim, const sf::FloatRect& rect, float duration)

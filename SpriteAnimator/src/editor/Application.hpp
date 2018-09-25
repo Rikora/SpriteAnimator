@@ -6,8 +6,7 @@
 #include <SFML/Graphics.hpp>
 #include <utils/TileInfo.hpp>
 #include <Thor/Input/ActionMap.hpp>
-#include <Thor/Animations/Animator.hpp>
-#include <Thor/Animations/FrameAnimation.hpp>
+#include <Thor/Animations.hpp>
 
 namespace px
 {
