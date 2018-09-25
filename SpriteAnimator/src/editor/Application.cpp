@@ -21,7 +21,8 @@ namespace px
 	sf::ContextSettings(0U, 0U, 8U)),
 	m_animator(m_spriteAnimations),
 	m_selectedTile(0.f, 0.f),
-	m_tileSize(0, 0)
+	m_tileSize(0, 0),
+	m_animationCount(0)
 	{
 		m_window.setPosition(sf::Vector2i(225, 90));
 		m_window.setVerticalSyncEnabled(true);
@@ -41,7 +42,7 @@ namespace px
 		// Tile size should be specified by the user!
 		const auto rows = m_spritesheet.getSize().x / 64;
 		const auto cols = m_spritesheet.getSize().y / 64;
-		unsigned index = 0;
+		unsigned int index = 0;
 
 		// Allocate size
 		m_tiles.resize(cols * rows);
@@ -55,10 +56,6 @@ namespace px
 				index++;
 			}
 		}
-
-		// Test animations
-		/*addAnimation("walk", 11, 9);
-		playAnimation("walk", true);*/
 	}
 
 	Application::~Application()
@@ -97,10 +94,21 @@ namespace px
 
 	void Application::update(sf::Time dt)
 	{
-		//m_sprite.setPosition(sf::Vector2f(400.f, 400.f));
+		m_sprite.setPosition(sf::Vector2f(400.f, 400.f));
 
 		ImGui::SFML::Update(m_window, dt);
-		//updateAnimation(dt);
+		updateAnimation(dt);
+	}
+
+	void Application::render()
+	{
+		m_window.clear();
+
+		if(m_animationCount != 0)
+			m_window.draw(m_sprite);
+
+		ImGui::SFML::Render(m_window);
+		m_window.display();
 	}
 
 	void Application::updateGUI()
@@ -197,14 +205,6 @@ namespace px
 		}
 	}
 
-	void Application::render()
-	{
-		m_window.clear();
-		//m_window.draw(m_sprite);
-		ImGui::SFML::Render(m_window);
-		m_window.display();
-	}
-
 	void Application::addAnimationsToGUI()
 	{
 		// Note: This can't be done before one has chosen a sprite sheet...
@@ -271,11 +271,23 @@ namespace px
 			ImGui::Spacing();
 			ImGui::SameLine(ImGui::GetWindowWidth() - 230);
 
+			// TOOD: Animation should be removed from the preview when submitted
 			if (ImGui::Button("SUBMIT"))
 			{
 				if (!animation.second.framesDetail.empty())
 				{
+					// Supply info to the frame animations vector
+					for (unsigned i = 0; i < animation.second.framesDetail.size(); ++i)
+					{
+						addFrameAnimation(animation.second.frameAnimation, 
+										  m_tiles[animation.second.framesDetail[i].spriteIndex].tile, 
+										  animation.second.framesDetail[i].duration);
+					}
 
+					// Add the final animation to the container
+					addAnimation(animation.first, animation.second.frameAnimation, animation.second.duration);
+					playAnimation(animation.first, true);
+					m_animationCount++;
 				}
 			}
 
@@ -355,13 +367,10 @@ namespace px
 		draw_list->AddRect(selectedTileTL, selectedTileBR, ImColor(255, 0, 0));
 	}
 
-	//void Application::addAnimation(const std::string& id, sf::Time duration)
-	//{
-	//	thor::FrameAnimation frameAnim;
-	//	frameAnim.ad
-	//	//frameAnim.addFrame(duration, static_cast<sf::IntRect>(rect));
-	//	//m_spriteAnimations.addAnimation(id, addFrames(frameAnim, row, frames), duration);
-	//}
+	void Application::addAnimation(const std::string& id, const thor::FrameAnimation& anim, float duration)
+	{
+		m_spriteAnimations.addAnimation(id, anim, sf::seconds(duration));
+	}
 
 	void Application::addFrameAnimation(thor::FrameAnimation& anim, const sf::FloatRect& rect, float duration)
 	{

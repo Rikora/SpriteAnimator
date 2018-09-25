@@ -30,6 +30,7 @@ namespace px
 
 	private:
 		// Test functionality for animations
+		void addAnimation(const std::string& id, const thor::FrameAnimation& anim, float duration);
 		void addFrameAnimation(thor::FrameAnimation& anim, const sf::FloatRect& rect, float duration);
 		void playAnimation(const std::string& id, bool repeat = false);
 		void updateAnimation(sf::Time dt);
@@ -48,7 +49,7 @@ namespace px
 		struct AnimationInfo
 		{
 			std::vector<FrameInfo> framesDetail;
-			std::vector<thor::FrameAnimation> frameAnimations;
+			thor::FrameAnimation frameAnimation;
 			float duration = 1.f;
 		};
 
@@ -68,5 +69,6 @@ namespace px
 
 	private:
 		static bool m_showSpriteSheet;
+		unsigned int m_animationCount;
 	};
 }
