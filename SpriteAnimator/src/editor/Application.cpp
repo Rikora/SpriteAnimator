@@ -57,13 +57,26 @@ namespace px
 		}
 
 		// Test animations
-		addAnimation("walk", 11, 9);
-		playAnimation("walk", true);
+		/*addAnimation("walk", 11, 9);
+		playAnimation("walk", true);*/
 	}
 
 	Application::~Application()
 	{
 		ImGui::SFML::Shutdown();
+	}
+
+	void Application::run()
+	{
+		sf::Clock clock;
+
+		while (m_window.isOpen())
+		{
+			pollEvents();
+			update(clock.restart());
+			updateGUI();
+			render();
+		}
 	}
 
 	void Application::pollEvents()
@@ -92,8 +105,7 @@ namespace px
 
 	void Application::updateGUI()
 	{
-		static int animationIndex = 0;
-		static float duration = 1.f;
+		static std::vector<char> animationName(50);
 
 		if (ImGui::BeginMainMenuBar())
 		{
@@ -104,44 +116,33 @@ namespace px
 
 			ImGui::Begin("Animator", NULL, ImVec2(0, 0), 1.f, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | 
 															  ImGuiWindowFlags_NoBringToFrontOnFocus);
-
-			// Note: This can't be done before one has chosen a sprite sheet...
-			// Should be able to swap places between animations?
-			ImGui::Spacing();
-			ImGui::Text("Animation: Idle"); // Change this for real animations...
-			ImGui::SameLine(ImGui::GetWindowWidth() - 35);
-			ImGui::Button("X", ImVec2(20, 20)); // Remove animation
 			addAnimationsToGUI();
-			ImGui::Spacing();
-			ImGui::Separator();
-			ImGui::Spacing();
-			ImGui::Text("\t\t\t\tAdd animation frame..");
-			ImGui::SameLine(ImGui::GetWindowWidth() - 35);
-			if (ImGui::Button("+", ImVec2(20, 20)))
-			{
-				m_animations.push_back({});
-			}
-			ImGui::Spacing();
-			ImGui::Separator();
-			ImGui::Spacing();
-			ImGui::Spacing();
-			ImGui::SameLine(ImGui::GetWindowWidth() - 230);
-			ImGui::Button("SUBMIT");
-			ImGui::Spacing();
-			ImGui::Separator();
-			ImGui::Spacing();
 
 			ImGui::SetNextTreeNodeOpen(true);
 			if (ImGui::CollapsingHeader("Animations"))
 			{
 				ImGui::Spacing();
-				ImGui::Text("Current animations: 1");
+				ImGui::Text("Name:");
+				ImGui::SameLine();
+
+				// Enter animation name
+				ImGui::InputText("##1", animationName.data(), animationName.size(), ImGuiInputTextFlags_CharsNoBlank);
 				ImGui::SameLine(ImGui::GetWindowWidth() - 40);
-				ImGui::Button("NEW");
+
+				if (ImGui::Button("NEW"))
+				{
+					if(animationName[0] != '\0')
+						m_animations.insert(std::make_pair(animationName.data(), AnimationInfo()));
+
+					// Clear vector and resize
+					animationName.clear();
+					animationName.resize(50);
+				}
+
 				ImGui::Spacing();
 				ImGui::Separator();
 				ImGui::Spacing();
-				ImGui::Text("Idle");
+				ImGui::Text("Placeholder");
 				ImGui::SameLine(ImGui::GetWindowWidth() - 35);
 				ImGui::Button("X", ImVec2(20, 20)); // Remove animation
 				ImGui::Spacing();
@@ -206,32 +207,83 @@ namespace px
 
 	void Application::addAnimationsToGUI()
 	{
+		// Note: This can't be done before one has chosen a sprite sheet...
 		unsigned int i = 1;
-		for (auto& frame : m_animations)
+		for (auto& animation : m_animations)
 		{
+			ImGui::Spacing();
+			ImGui::Text("Animation: %s", animation.first.c_str());
+			ImGui::PushID(i);
+			ImGui::SameLine(ImGui::GetWindowWidth() - 35);
+
+			// Remove animation
+			if (ImGui::Button("X", ImVec2(20, 20)))
+			{
+				m_animations.erase(animation.first);
+				ImGui::PopID();
+				return;
+			}
+
+			ImGui::Spacing();
+			ImGui::InputFloat("Duration", &animation.second.duration, 0.1f);
+			utils::constrainNegativesFloat(animation.second.duration);
+
+			unsigned int p = 1;
+			for (auto& frame : animation.second.framesDetail)
+			{
+				ImGui::Spacing();
+				ImGui::Separator();
+				ImGui::Spacing();
+				ImGui::PushID(p);
+
+				// Update sprite index for frame animation
+				ImGui::Combo("Sprite", &frame.spriteIndex, m_tiles);
+				ImGui::SameLine(ImGui::GetWindowWidth() - 35);
+
+				// Remove frame
+				if (ImGui::Button("X", ImVec2(20, 20)))
+				{
+					animation.second.framesDetail.erase(animation.second.framesDetail.begin() + (p - 1));
+					ImGui::PopID();
+					break;
+				}
+
+				ImGui::Spacing();
+				ImGui::InputFloat("Duration", &frame.duration, 0.1f); // Note: This is a relative duration compared to the animation duration
+				utils::constrainNegativesFloat(frame.duration);
+				ImGui::PopID();
+				p++;
+			}
+
 			ImGui::Spacing();
 			ImGui::Separator();
 			ImGui::Spacing();
-			ImGui::PushID(i);
-
-			// Choose sprite image
-			if (ImGui::Combo("Sprite", &frame.spriteIndex, m_tiles))
-			{
-
-			}
+			ImGui::Text("\t\t\t\tAdd frame animation..");
 			ImGui::SameLine(ImGui::GetWindowWidth() - 35);
 
-			// Remove frame
-			if (ImGui::Button("X", ImVec2(20, 20)))
+			// Add frame animation
+			if (ImGui::Button("+", ImVec2(20, 20)))
 			{
-				m_animations.erase(m_animations.begin() + (i - 1));
+				animation.second.framesDetail.push_back({});
 			}
 
-			//anim.addFrame(duration, sf::IntRect(frames * pxSize, row * pxSize, pxSize, pxSize));
+			ImGui::Spacing();
+			ImGui::Separator();
+			ImGui::Spacing();
+			ImGui::Spacing();
+			ImGui::SameLine(ImGui::GetWindowWidth() - 230);
+
+			if (ImGui::Button("SUBMIT"))
+			{
+				if (!animation.second.framesDetail.empty())
+				{
+
+				}
+			}
 
 			ImGui::Spacing();
-			ImGui::InputFloat("Duration", &frame.duration, 0.1f);
-			utils::constrainNegativesFloat(frame.duration);
+			ImGui::Separator();
+			ImGui::Spacing();
 			ImGui::PopID();
 			i++;
 		}
@@ -305,37 +357,17 @@ namespace px
 		draw_list->AddRect(selectedTileTL, selectedTileBR, ImColor(255, 0, 0));
 	}
 
-	void Application::run()
+	//void Application::addAnimation(const std::string& id, sf::Time duration)
+	//{
+	//	thor::FrameAnimation frameAnim;
+	//	frameAnim.ad
+	//	//frameAnim.addFrame(duration, static_cast<sf::IntRect>(rect));
+	//	//m_spriteAnimations.addAnimation(id, addFrames(frameAnim, row, frames), duration);
+	//}
+
+	void Application::addFrameAnimation(thor::FrameAnimation& anim, const sf::FloatRect& rect, float duration)
 	{
-		sf::Clock clock;
-
-		while (m_window.isOpen())
-		{
-			pollEvents();
-			update(clock.restart());
-			updateGUI();
-			render();
-		}
-	}
-
-	thor::FrameAnimation Application::addFrames(thor::FrameAnimation& anim, int row, int frames, int pxSize, float duration)
-	{
-		// Row -> y
-		// Frames -> x
-		// Remove loop for editor purpose?
-		if (frames > 1)
-			for (int i = 0; i < frames * pxSize; i += pxSize)
-				anim.addFrame(duration, sf::IntRect(i, row * pxSize, pxSize, pxSize));
-		else
-			anim.addFrame(duration, sf::IntRect(frames * pxSize, row * pxSize, pxSize, pxSize));
-
-		return anim;
-	}
-
-	void Application::addAnimation(const std::string& id, int row, int frames, sf::Time duration)
-	{
-		thor::FrameAnimation frameAnim;
-		m_spriteAnimations.addAnimation(id, addFrames(frameAnim, row, frames), duration);
+		anim.addFrame(duration, static_cast<sf::IntRect>(rect));
 	}
 
 	void Application::playAnimation(const std::string& id, bool repeat)

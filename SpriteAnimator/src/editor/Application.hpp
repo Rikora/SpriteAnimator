@@ -30,8 +30,7 @@ namespace px
 
 	private:
 		// Test functionality for animations
-		thor::FrameAnimation addFrames(thor::FrameAnimation& anim, int row, int frames, int pxSize = 64, float duration = 1.f);
-		void addAnimation(const std::string& id, int row, int frames, sf::Time duration = sf::seconds(1.f));
+		void addFrameAnimation(thor::FrameAnimation& anim, const sf::FloatRect& rect, float duration);
 		void playAnimation(const std::string& id, bool repeat = false);
 		void updateAnimation(sf::Time dt);
 
@@ -40,9 +39,16 @@ namespace px
 		using Animator = thor::Animator<sf::Sprite, std::string>;
 
 	private:
-		struct AnimationInfo
+		struct FrameInfo
 		{
 			int spriteIndex = 0;
+			float duration = 1.f;
+		};
+
+		struct AnimationInfo
+		{
+			std::vector<FrameInfo> framesDetail;
+			std::vector<thor::FrameAnimation> frameAnimations;
 			float duration = 1.f;
 		};
 
@@ -50,8 +56,7 @@ namespace px
 		sf::RenderWindow m_window;
 		sf::Vector2f m_selectedTile;
 		std::vector<TileInfo> m_tiles;
-		std::vector<AnimationInfo> m_animations;
-		//std::vector<thor::FrameAnimation> m_frameAnimations;
+		std::map<std::string, AnimationInfo> m_animations;
 		sf::Vector2i m_tileSize;
 
 	private:
