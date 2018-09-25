@@ -21,15 +21,13 @@ namespace px
 		void run();
 
 	private:
+		void drawGrid();
+		void addAnimationsToGUI();
 		void pollEvents();
 		void update(sf::Time dt);
 		void updateGUI();
-		void render();
-		void drawGrid();
-		void addAnimationsToGUI();
 
 	private:
-		// Test functionality for animations
 		void addAnimation(const std::string& id, const thor::FrameAnimation& anim, float duration);
 		void addFrameAnimation(thor::FrameAnimation& anim, const sf::FloatRect& rect, float duration);
 		void playAnimation(const std::string& id, bool repeat = false);
@@ -51,6 +49,7 @@ namespace px
 			std::vector<FrameInfo> framesDetail;
 			thor::FrameAnimation frameAnimation;
 			float duration = 1.f;
+			bool submitted = false;
 		};
 
 	private:

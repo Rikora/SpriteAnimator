@@ -71,8 +71,6 @@ namespace px
 		{
 			pollEvents();
 			update(clock.restart());
-			updateGUI();
-			render();
 		}
 	}
 
@@ -94,18 +92,19 @@ namespace px
 
 	void Application::update(sf::Time dt)
 	{
+		// Various updates
 		m_sprite.setPosition(sf::Vector2f(400.f, 400.f));
-
 		ImGui::SFML::Update(m_window, dt);
-		updateAnimation(dt);
-	}
+		updateGUI();
 
-	void Application::render()
-	{
+		// Render
 		m_window.clear();
 
-		if(m_animationCount != 0)
+		if (m_animationCount != 0)
+		{
+			updateAnimation(dt);
 			m_window.draw(m_sprite);
+		}
 
 		ImGui::SFML::Render(m_window);
 		m_window.display();
@@ -146,16 +145,29 @@ namespace px
 					animationName.clear();
 					animationName.resize(50);
 				}
+				ImGui::Spacing();
 
-				ImGui::Spacing();
-				ImGui::Separator();
-				ImGui::Spacing();
-				ImGui::Text("Placeholder");
-				ImGui::SameLine(ImGui::GetWindowWidth() - 35);
-				ImGui::Button("X", ImVec2(20, 20)); // Remove animation
-				ImGui::Spacing();
-				ImGui::Separator();
-				ImGui::Spacing();
+				//unsigned int i = 1;
+				for (auto animation : m_animations)
+				{
+					ImGui::Separator();
+					ImGui::Spacing();
+					ImGui::Text(animation.first.c_str());
+					//ImGui::SameLine(ImGui::GetWindowWidth() - 35);
+
+					//// Remove animation
+					//ImGui::PushID(i);
+					//if (ImGui::Button("X", ImVec2(20, 20)))
+					//{
+
+					//}
+
+					ImGui::Spacing();
+					ImGui::Separator();
+					ImGui::Spacing();
+					//ImGui::PopID();
+					//i++;
+				}
 			}
 
 			// Properties for sprite sheet
@@ -211,91 +223,96 @@ namespace px
 		unsigned int i = 1;
 		for (auto& animation : m_animations)
 		{
-			ImGui::Spacing();
-			ImGui::Text("Animation: %s", animation.first.c_str());
-			ImGui::PushID(i);
-			ImGui::SameLine(ImGui::GetWindowWidth() - 35);
-
-			// Remove animation
-			if (ImGui::Button("X", ImVec2(20, 20)))
+			if (!animation.second.submitted)
 			{
-				m_animations.erase(animation.first);
-				ImGui::PopID();
-				return;
-			}
+				ImGui::Spacing();
+				ImGui::Text("Animation: %s", animation.first.c_str());
+				ImGui::PushID(i);
+				ImGui::SameLine(ImGui::GetWindowWidth() - 35);
 
-			ImGui::Spacing();
-			ImGui::InputFloat("Duration", &animation.second.duration, 0.1f);
-			utils::constrainNegativesFloat(animation.second.duration);
+				// Remove animation
+				if (ImGui::Button("X", ImVec2(20, 20)))
+				{
+					m_animations.erase(animation.first);
+					ImGui::PopID();
+					return;
+				}
 
-			unsigned int p = 1;
-			for (auto& frame : animation.second.framesDetail)
-			{
+				ImGui::Spacing();
+				ImGui::InputFloat("Duration", &animation.second.duration, 0.1f);
+				utils::constrainNegativesFloat(animation.second.duration);
+
+				unsigned int p = 1;
+				for (auto& frame : animation.second.framesDetail)
+				{
+					ImGui::Spacing();
+					ImGui::Separator();
+					ImGui::Spacing();
+					ImGui::PushID(p);
+
+					// Update sprite index for frame animation
+					ImGui::Combo("Sprite", &frame.spriteIndex, m_tiles);
+					ImGui::SameLine(ImGui::GetWindowWidth() - 35);
+
+					// Remove frame
+					if (ImGui::Button("X", ImVec2(20, 20)))
+					{
+						animation.second.framesDetail.erase(animation.second.framesDetail.begin() + (p - 1));
+					}
+
+					ImGui::Spacing();
+					ImGui::InputFloat("Duration", &frame.duration, 0.1f); // Note: This is a relative duration compared to the animation duration
+					utils::constrainNegativesFloat(frame.duration);
+					ImGui::PopID();
+					p++;
+				}
+
 				ImGui::Spacing();
 				ImGui::Separator();
 				ImGui::Spacing();
-				ImGui::PushID(p);
-
-				// Update sprite index for frame animation
-				ImGui::Combo("Sprite", &frame.spriteIndex, m_tiles);
+				ImGui::Text("\t\t\t\tAdd frame animation..");
 				ImGui::SameLine(ImGui::GetWindowWidth() - 35);
 
-				// Remove frame
-				if (ImGui::Button("X", ImVec2(20, 20)))
+				// Add frame animation
+				if (ImGui::Button("+", ImVec2(20, 20)))
 				{
-					animation.second.framesDetail.erase(animation.second.framesDetail.begin() + (p - 1));
+					animation.second.framesDetail.push_back({});
 				}
 
 				ImGui::Spacing();
-				ImGui::InputFloat("Duration", &frame.duration, 0.1f); // Note: This is a relative duration compared to the animation duration
-				utils::constrainNegativesFloat(frame.duration);
-				ImGui::PopID();
-				p++;
-			}
+				ImGui::Separator();
+				ImGui::Spacing();
+				ImGui::Spacing();
+				ImGui::SameLine(ImGui::GetWindowWidth() - 230);
 
-			ImGui::Spacing();
-			ImGui::Separator();
-			ImGui::Spacing();
-			ImGui::Text("\t\t\t\tAdd frame animation..");
-			ImGui::SameLine(ImGui::GetWindowWidth() - 35);
-
-			// Add frame animation
-			if (ImGui::Button("+", ImVec2(20, 20)))
-			{
-				animation.second.framesDetail.push_back({});
-			}
-
-			ImGui::Spacing();
-			ImGui::Separator();
-			ImGui::Spacing();
-			ImGui::Spacing();
-			ImGui::SameLine(ImGui::GetWindowWidth() - 230);
-
-			// TOOD: Animation should be removed from the preview when submitted
-			if (ImGui::Button("SUBMIT"))
-			{
-				if (!animation.second.framesDetail.empty())
+				// TOOD: Animation should be removed from the preview when submitted
+				// But the user should also be able to tweak the animation parameters after submission...
+				if (ImGui::Button("SUBMIT"))
 				{
-					// Supply info to the frame animations vector
-					for (unsigned i = 0; i < animation.second.framesDetail.size(); ++i)
+					if (!animation.second.framesDetail.empty())
 					{
-						addFrameAnimation(animation.second.frameAnimation, 
-										  m_tiles[animation.second.framesDetail[i].spriteIndex].tile, 
-										  animation.second.framesDetail[i].duration);
+						// Supply info to the frame animations vector
+						for (unsigned i = 0; i < animation.second.framesDetail.size(); ++i)
+						{
+							addFrameAnimation(animation.second.frameAnimation,
+								m_tiles[animation.second.framesDetail[i].spriteIndex].tile,
+								animation.second.framesDetail[i].duration);
+						}
+
+						// Add the final animation to the container
+						addAnimation(animation.first, animation.second.frameAnimation, animation.second.duration);
+						playAnimation(animation.first, true);
+						animation.second.submitted = true;
+						m_animationCount++;
 					}
-
-					// Add the final animation to the container
-					addAnimation(animation.first, animation.second.frameAnimation, animation.second.duration);
-					playAnimation(animation.first, true);
-					m_animationCount++;
 				}
-			}
 
-			ImGui::Spacing();
-			ImGui::Separator();
-			ImGui::Spacing();
-			ImGui::PopID();
-			i++;
+				ImGui::Spacing();
+				ImGui::Separator();
+				ImGui::Spacing();
+				ImGui::PopID();
+				i++;
+			}
 		}
 	}
 
