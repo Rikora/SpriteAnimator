@@ -244,8 +244,6 @@ namespace px
 				if (ImGui::Button("X", ImVec2(20, 20)))
 				{
 					animation.second.framesDetail.erase(animation.second.framesDetail.begin() + (p - 1));
-					ImGui::PopID();
-					break;
 				}
 
 				ImGui::Spacing();
