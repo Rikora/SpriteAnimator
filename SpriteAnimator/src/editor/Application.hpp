@@ -67,6 +67,5 @@ namespace px
 
 	private:
 		static bool m_showSpriteSheet;
-		unsigned int m_animationCount;
 	};
 }

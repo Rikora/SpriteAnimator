@@ -10,9 +10,9 @@ namespace px
 {
 	namespace utils
 	{
-		inline void constrainNegativesFloat(float& value)
+		inline void constrainNegativesFloat(float& value, float min = 0.f)
 		{
-			value = std::clamp(value, 0.f, std::numeric_limits<float>::max());
+			value = std::clamp(value, min, std::numeric_limits<float>::max());
 		}
 
 		inline void constrainNegativesVec(sf::Vector2i& value)

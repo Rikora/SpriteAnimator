@@ -21,8 +21,7 @@ namespace px
 	sf::ContextSettings(0U, 0U, 8U)),
 	m_animator(m_spriteAnimations),
 	m_selectedTile(0.f, 0.f),
-	m_tileSize(0, 0),
-	m_animationCount(0)
+	m_tileSize(0, 0)
 	{
 		m_window.setPosition(sf::Vector2i(225, 90));
 		m_window.setVerticalSyncEnabled(true);
@@ -100,7 +99,7 @@ namespace px
 		// Render
 		m_window.clear();
 
-		if (m_animationCount != 0)
+		if (m_spriteAnimations.getSize() != 0)
 		{
 			updateAnimation(dt);
 			m_window.draw(m_sprite);
@@ -235,9 +234,9 @@ namespace px
 			{
 				if (animation.second.submitted)
 				{
+					m_animator.stop();
 					animation.second.framesDetail.clear();
 					m_spriteAnimations.removeAnimation(animation.first);
-					m_animator.stop();
 				}
 
 				m_animations.erase(animation.first);
@@ -248,16 +247,17 @@ namespace px
 			ImGui::Spacing();
 			if (ImGui::InputFloat("Duration", &animation.second.duration, 0.1f))
 			{
-				// This is a bit unstable and can freeze the editor sometimes
-				if (animation.second.submitted)
+				// This is a bit unstable and can freeze the editor sometimes?
+				if (animation.second.submitted && !animation.second.framesDetail.empty())
 				{
+					utils::constrainNegativesFloat(animation.second.duration, 0.01f);
 					m_animator.stop();
 					m_spriteAnimations.setDuration(animation.first, animation.second.duration);
 					playAnimation(animation.first, true);
 				}
 			}
 
-			utils::constrainNegativesFloat(animation.second.duration);
+			utils::constrainNegativesFloat(animation.second.duration, 0.01f);
 
 			unsigned int p = 1;
 			for (auto& frame : animation.second.framesDetail)
@@ -278,8 +278,9 @@ namespace px
 
 					if (animation.second.framesDetail.empty())
 					{
-						m_spriteAnimations.removeAnimation(animation.first);
 						m_animator.stop();
+						m_spriteAnimations.removeAnimation(animation.first);
+						animation.second.submitted = false; // Animation can now be added again
 					}
 
 					if (animation.second.submitted && !animation.second.framesDetail.empty())
@@ -340,11 +341,9 @@ namespace px
 					// Add the final animation to the container
 					if (!animation.second.submitted)
 					{
-						// No way to change the duration of the animation later on?
 						addAnimation(animation.first, animation.second.frameAnimation, animation.second.duration);
 						playAnimation(animation.first, true);
 						animation.second.submitted = true;
-						m_animationCount++;
 					}
 				}
 			}

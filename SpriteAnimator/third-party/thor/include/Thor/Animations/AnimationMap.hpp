@@ -105,8 +105,11 @@ class AnimationMap
 		///  @arg @c progress is a number in [0,1] determining the animation state.
 		/// @param duration Duration of the animation (> 0).
 		void						addAnimation(Id id, std::function<void(Animated&, float)> animation, sf::Time duration);
+
+		// Additional
 		void						removeAnimation(const Id& id);
 		void						setDuration(const Id& id, const float& duration);
+		const std::size_t			getSize() const;
 
 
 

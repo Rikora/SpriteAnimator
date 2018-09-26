@@ -59,6 +59,12 @@ inline void AnimationMap<Animated, Id>::setDuration(const Id& id, const float& d
 	itr->second.duration = sf::seconds(duration);
 }
 
+template<class Animated, typename Id>
+inline const std::size_t AnimationMap<Animated, Id>::getSize() const
+{
+	return mAnimationMap.size();
+}
+
 template <class Animated, typename Id>
 const typename AnimationMap<Animated, Id>::TimedAnimation& AnimationMap<Animated, Id>::getAnimation(const Id& id) const
 {
