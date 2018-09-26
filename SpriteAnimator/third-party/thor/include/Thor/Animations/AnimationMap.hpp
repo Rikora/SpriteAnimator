@@ -105,6 +105,9 @@ class AnimationMap
 		///  @arg @c progress is a number in [0,1] determining the animation state.
 		/// @param duration Duration of the animation (> 0).
 		void						addAnimation(Id id, std::function<void(Animated&, float)> animation, sf::Time duration);
+		void						removeAnimation(const Id& id);
+		void						setDuration(const Id& id, const float& duration);
+
 
 
 	// ---------------------------------------------------------------------------------------------------------------------------
@@ -125,7 +128,6 @@ class AnimationMap
 };
 
 /// @}
-
 } // namespace thor
 
 #include <Thor/Animations/Detail/AnimationMap.inl>

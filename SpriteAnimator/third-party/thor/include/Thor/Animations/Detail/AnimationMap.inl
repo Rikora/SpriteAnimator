@@ -1,3 +1,4 @@
+#include "..\AnimationMap.hpp"
 /////////////////////////////////////////////////////////////////////////////////
 //
 // Thor C++ Library
@@ -39,6 +40,23 @@ void AnimationMap<Animated, Id>::addAnimation(Id id, std::function<void(Animated
 	assert(duration > sf::Time::Zero);
 
 	mAnimationMap.insert(std::make_pair(std::move(id), TimedAnimation(std::move(animation), duration)));
+}
+
+template<class Animated, typename Id>
+inline void AnimationMap<Animated, Id>::removeAnimation(const Id& id)
+{
+	assert(mAnimationMap.find(id) != mAnimationMap.end());
+
+	mAnimationMap.erase(id);
+}
+
+template<class Animated, typename Id>
+inline void AnimationMap<Animated, Id>::setDuration(const Id& id, const float& duration)
+{
+	auto itr = mAnimationMap.find(id);
+	assert(itr != mAnimationMap.end());
+
+	itr->second.duration = sf::seconds(duration);
 }
 
 template <class Animated, typename Id>

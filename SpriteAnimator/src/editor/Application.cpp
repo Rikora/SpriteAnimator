@@ -153,6 +153,8 @@ namespace px
 					ImGui::Separator();
 					ImGui::Spacing();
 					ImGui::Text(animation.first.c_str());
+
+					// TODO: Add play/pause button for animation
 					//ImGui::SameLine(ImGui::GetWindowWidth() - 35);
 
 					//// Remove animation
@@ -231,13 +233,30 @@ namespace px
 			// Remove animation
 			if (ImGui::Button("X", ImVec2(20, 20)))
 			{
+				if (animation.second.submitted)
+				{
+					animation.second.framesDetail.clear();
+					m_spriteAnimations.removeAnimation(animation.first);
+					m_animator.stop();
+				}
+
 				m_animations.erase(animation.first);
 				ImGui::PopID();
 				return;
 			}
 
 			ImGui::Spacing();
-			ImGui::InputFloat("Duration", &animation.second.duration, 0.1f);
+			if (ImGui::InputFloat("Duration", &animation.second.duration, 0.1f))
+			{
+				// This is a bit unstable and can freeze the editor sometimes
+				if (animation.second.submitted)
+				{
+					m_animator.stop();
+					m_spriteAnimations.setDuration(animation.first, animation.second.duration);
+					playAnimation(animation.first, true);
+				}
+			}
+
 			utils::constrainNegativesFloat(animation.second.duration);
 
 			unsigned int p = 1;
@@ -256,6 +275,25 @@ namespace px
 				if (ImGui::Button("X", ImVec2(20, 20)))
 				{
 					animation.second.framesDetail.erase(animation.second.framesDetail.begin() + (p - 1));
+
+					if (animation.second.framesDetail.empty())
+					{
+						m_spriteAnimations.removeAnimation(animation.first);
+						m_animator.stop();
+					}
+
+					if (animation.second.submitted && !animation.second.framesDetail.empty())
+					{
+						animation.second.frameAnimation = thor::FrameAnimation();
+
+						// Supply info to the frame animations vector
+						for (unsigned i = 0; i < animation.second.framesDetail.size(); ++i)
+						{
+							addFrameAnimation(animation.second.frameAnimation,
+											  m_tiles[animation.second.framesDetail[i].spriteIndex].tile,
+											  animation.second.framesDetail[i].duration);
+						}
+					}
 				}
 
 				ImGui::Spacing();
@@ -295,8 +333,8 @@ namespace px
 					for (unsigned i = 0; i < animation.second.framesDetail.size(); ++i)
 					{
 						addFrameAnimation(animation.second.frameAnimation,
-							m_tiles[animation.second.framesDetail[i].spriteIndex].tile,
-							animation.second.framesDetail[i].duration);
+										  m_tiles[animation.second.framesDetail[i].spriteIndex].tile,
+										  animation.second.framesDetail[i].duration);
 					}
 
 					// Add the final animation to the container
