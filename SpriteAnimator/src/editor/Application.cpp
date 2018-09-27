@@ -34,8 +34,14 @@ namespace px
 		m_actions["close"] = eventClosed || close;
 
 		// Load textures (should not be here later...)
+		m_playButtonTexture.loadFromFile("src/res/icons/play_button.png");
+		m_pauseButtonTexture.loadFromFile("src/res/icons/pause_button.png");
 		m_spritesheet.loadFromFile("src/res/sprites/orc.png");
+
+		// Set textures
 		m_sprite.setTexture(m_spritesheet);
+		m_playButton.setTexture(m_playButtonTexture);
+		m_pauseButton.setTexture(m_pauseButtonTexture);
 
 		// Fill the vector
 		// Tile size should be specified by the user!
@@ -145,29 +151,39 @@ namespace px
 					animationName.resize(50);
 				}
 				ImGui::Spacing();
+				ImGui::Separator();
+				ImGui::Spacing();
 
-				//unsigned int i = 1;
+				unsigned int i = 1;
 				for (auto animation : m_animations)
 				{
-					ImGui::Separator();
-					ImGui::Spacing();
 					ImGui::Text(animation.first.c_str());
+					ImGui::PushID(i);
 
-					// TODO: Add play/pause button for animation
-					//ImGui::SameLine(ImGui::GetWindowWidth() - 35);
+					// Play animation
+					ImGui::SameLine(ImGui::GetWindowWidth() - 35);
+					if (ImGui::ImageButton(m_playButton, sf::Vector2f(17.f, 17.f), 1, sf::Color::Black))
+					{
+						if (animation.second.submitted)
+						{
+							playAnimation(animation.first, true);
+							m_playingAnimation = animation.first;
+						}
+					}
 
-					//// Remove animation
-					//ImGui::PushID(i);
-					//if (ImGui::Button("X", ImVec2(20, 20)))
-					//{
-
-					//}
+					// Pause animation
+					ImGui::SameLine(ImGui::GetWindowWidth() - 60);
+					if (ImGui::ImageButton(m_pauseButton, sf::Vector2f(17.f, 17.f), 1, sf::Color::Black))
+					{
+						if (animation.second.submitted && m_playingAnimation == animation.first)
+							m_animator.stop();
+					}
 
 					ImGui::Spacing();
 					ImGui::Separator();
-					ImGui::Spacing();
-					//ImGui::PopID();
-					//i++;
+					ImGui::Spacing();	
+					ImGui::PopID();
+					i++;
 				}
 			}
 
@@ -297,8 +313,9 @@ namespace px
 					}
 				}
 
+				// Note: This is a relative duration compared to the animation duration
 				ImGui::Spacing();
-				ImGui::InputFloat("Duration", &frame.duration, 0.1f); // Note: This is a relative duration compared to the animation duration
+				ImGui::InputFloat("Duration", &frame.duration, 0.1f);
 				utils::constrainNegativesFloat(frame.duration);
 				ImGui::PopID();
 				p++;
@@ -344,6 +361,7 @@ namespace px
 						addAnimation(animation.first, animation.second.frameAnimation, animation.second.duration);
 						playAnimation(animation.first, true);
 						animation.second.submitted = true;
+						m_playingAnimation = animation.first;
 					}
 				}
 			}

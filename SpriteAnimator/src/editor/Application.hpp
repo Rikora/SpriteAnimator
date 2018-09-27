@@ -57,12 +57,17 @@ namespace px
 		std::vector<TileInfo> m_tiles;
 		std::map<std::string, AnimationInfo> m_animations;
 		sf::Vector2i m_tileSize;
+		std::string m_playingAnimation;
 
 	private:
 		thor::ActionMap<std::string> m_actions;
 		AnimationsHolder m_spriteAnimations;
 		Animator m_animator;
 		sf::Sprite m_sprite;
+		sf::Sprite m_playButton;
+		sf::Sprite m_pauseButton;
+		sf::Texture m_playButtonTexture;
+		sf::Texture m_pauseButtonTexture;
 		sf::Texture m_spritesheet;
 
 	private:
