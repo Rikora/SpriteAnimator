@@ -126,21 +126,24 @@ namespace px
 				ImGui::EndMenu();
 			}
 
-			ImGui::Begin("Animator", NULL, ImVec2(0, 0), 1.f, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | 
+			ImGui::Begin("Animator", NULL, ImVec2(0, 0), 1.f, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
 															  ImGuiWindowFlags_NoBringToFrontOnFocus);
 			addAnimationsToGUI();
 
 			ImGui::SetNextTreeNodeOpen(true);
 			if (ImGui::CollapsingHeader("Animations"))
 			{
+				ImGui::PushItemWidth(140);
+				ImGui::Spacing();
 				ImGui::Spacing();
 				ImGui::Text("Name:");
 				ImGui::SameLine();
 
 				// Enter animation name
 				ImGui::InputText("##1", animationName.data(), animationName.size(), ImGuiInputTextFlags_CharsNoBlank);
-				ImGui::SameLine(ImGui::GetWindowWidth() - 40);
+				ImGui::PopItemWidth();
 
+				ImGui::SameLine(ImGui::GetWindowWidth() - 60);
 				if (ImGui::Button("NEW"))
 				{
 					if(animationName[0] != '\0')
@@ -151,7 +154,9 @@ namespace px
 					animationName.resize(50);
 				}
 				ImGui::Spacing();
+				ImGui::Spacing();
 				ImGui::Separator();
+				ImGui::Spacing();
 				ImGui::Spacing();
 
 				unsigned int i = 1;
@@ -161,7 +166,7 @@ namespace px
 					ImGui::PushID(i);
 
 					// Play animation
-					ImGui::SameLine(ImGui::GetWindowWidth() - 35);
+					ImGui::SameLine(ImGui::GetWindowWidth() - 50);
 					if (ImGui::ImageButton(m_playButton, sf::Vector2f(17.f, 17.f), 1, sf::Color::Black))
 					{
 						if (animation.second.submitted)
@@ -172,7 +177,7 @@ namespace px
 					}
 
 					// Pause animation
-					ImGui::SameLine(ImGui::GetWindowWidth() - 60);
+					ImGui::SameLine(ImGui::GetWindowWidth() - 75);
 					if (ImGui::ImageButton(m_pauseButton, sf::Vector2f(17.f, 17.f), 1, sf::Color::Black))
 					{
 						if (animation.second.submitted && m_playingAnimation == animation.first)
@@ -181,7 +186,8 @@ namespace px
 
 					ImGui::Spacing();
 					ImGui::Separator();
-					ImGui::Spacing();	
+					ImGui::Spacing();
+					ImGui::Spacing();
 					ImGui::PopID();
 					i++;
 				}
@@ -243,7 +249,7 @@ namespace px
 			ImGui::Spacing();
 			ImGui::Text("Animation: %s", animation.first.c_str());
 			ImGui::PushID(i);
-			ImGui::SameLine(ImGui::GetWindowWidth() - 35);
+			ImGui::SameLine(ImGui::GetWindowWidth() - 57);
 
 			// Remove animation
 			if (ImGui::Button("X", ImVec2(20, 20)))
@@ -261,6 +267,7 @@ namespace px
 			}
 
 			ImGui::Spacing();
+			ImGui::PushItemWidth(150);
 			if (ImGui::InputFloat("Duration", &animation.second.duration, 0.1f))
 			{
 				// This is a bit unstable and can freeze the editor sometimes?
@@ -272,6 +279,7 @@ namespace px
 					playAnimation(animation.first, true);
 				}
 			}
+			ImGui::PopItemWidth();
 
 			utils::constrainNegativesFloat(animation.second.duration, 0.01f);
 
@@ -279,20 +287,23 @@ namespace px
 			for (auto& frame : animation.second.framesDetail)
 			{
 				ImGui::Spacing();
+				ImGui::Spacing();
 				ImGui::Separator();
+				ImGui::Spacing();
 				ImGui::Spacing();
 				ImGui::PushID(p);
 
 				// Update sprite index for frame animation
+				ImGui::PushItemWidth(150);
 				ImGui::Combo("Sprite", &frame.spriteIndex, m_tiles);
-				ImGui::SameLine(ImGui::GetWindowWidth() - 35);
+				ImGui::SameLine(ImGui::GetWindowWidth() - 57);
 
 				// Remove frame
 				if (ImGui::Button("X", ImVec2(20, 20)))
 				{
 					animation.second.framesDetail.erase(animation.second.framesDetail.begin() + (p - 1));
 
-					if (animation.second.framesDetail.empty())
+					if (animation.second.framesDetail.empty() && animation.second.submitted)
 					{
 						m_animator.stop();
 						m_spriteAnimations.removeAnimation(animation.first);
@@ -316,18 +327,20 @@ namespace px
 				// Note: This is a relative duration compared to the animation duration
 				ImGui::Spacing();
 				ImGui::InputFloat("Duration", &frame.duration, 0.1f);
+				ImGui::PopItemWidth();
 				utils::constrainNegativesFloat(frame.duration);
 				ImGui::PopID();
 				p++;
 			}
 
 			ImGui::Spacing();
+			ImGui::Spacing();
 			ImGui::Separator();
 			ImGui::Spacing();
-			ImGui::Text("\t\t\t\tAdd frame animation..");
-			ImGui::SameLine(ImGui::GetWindowWidth() - 35);
+			ImGui::Spacing();
 
 			// Add frame animation
+			ImGui::SameLine(ImGui::GetWindowWidth() - 57);
 			if (ImGui::Button("+", ImVec2(20, 20)))
 			{
 				animation.second.framesDetail.push_back({});
