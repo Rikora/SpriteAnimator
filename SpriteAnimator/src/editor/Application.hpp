@@ -22,11 +22,15 @@ namespace px
 	private:
 		void drawGrid();
 		void addAnimationsToGUI();
+		void openTextureFile();
 		void pollEvents();
 		void update(sf::Time dt);
 		void updateGUI();
+		const bool hasLoadedTexture() const;
+		const bool hasSelectedTileSize() const;
 
 	private:
+		// Animations
 		void addAnimation(const std::string& id, const thor::FrameAnimation& anim, float duration);
 		void addFrameAnimation(thor::FrameAnimation& anim, const sf::FloatRect& rect, float duration);
 		void playAnimation(const std::string& id, bool repeat = false);
@@ -58,6 +62,7 @@ namespace px
 		std::map<std::string, AnimationInfo> m_animations;
 		sf::Vector2i m_tileSize;
 		std::string m_playingAnimation;
+		std::string m_texturePath;
 
 	private:
 		thor::ActionMap<std::string> m_actions;

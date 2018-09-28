@@ -8,6 +8,7 @@
 #include <imgui.h>
 #include <imgui-SFML.h>
 #include <iostream>
+#include <nfd.h>
 
 namespace px
 {
@@ -36,31 +37,10 @@ namespace px
 		// Load textures (should not be here later...)
 		m_playButtonTexture.loadFromFile("src/res/icons/play_button.png");
 		m_pauseButtonTexture.loadFromFile("src/res/icons/pause_button.png");
-		m_spritesheet.loadFromFile("src/res/sprites/orc.png");
 
 		// Set textures
-		m_sprite.setTexture(m_spritesheet);
 		m_playButton.setTexture(m_playButtonTexture);
 		m_pauseButton.setTexture(m_pauseButtonTexture);
-
-		// Fill the vector
-		// Tile size should be specified by the user!
-		const auto rows = m_spritesheet.getSize().x / 64;
-		const auto cols = m_spritesheet.getSize().y / 64;
-		unsigned int index = 0;
-
-		// Allocate size
-		m_tiles.resize(cols * rows);
-
-		for (unsigned y = 0; y < cols; ++y)
-		{
-			for (unsigned x = 0; x < rows; ++x)
-			{
-				m_tiles[index] = { "image" + std::to_string(index), 
-									sf::FloatRect(static_cast<float>(x * 64), static_cast<float>(y * 64), 64.f, 64.f) };
-				index++;
-			}
-		}
 	}
 
 	Application::~Application()
@@ -146,7 +126,7 @@ namespace px
 				ImGui::SameLine(ImGui::GetWindowWidth() - 60);
 				if (ImGui::Button("NEW"))
 				{
-					if(animationName[0] != '\0')
+					if(animationName[0] != '\0' && hasLoadedTexture())
 						m_animations.insert(std::make_pair(animationName.data(), AnimationInfo()));
 
 					// Clear vector and resize
@@ -194,9 +174,10 @@ namespace px
 			}
 
 			// Properties for sprite sheet
-			//ImGui::SetNextTreeNodeOpen(true);
+			ImGui::SetNextTreeNodeOpen(true);
 			if (ImGui::CollapsingHeader("Sprite Sheet"))
 			{
+				// Need to lock this variable if the user wants to change the tile size after!
 				ImGui::Spacing();
 				ImGui::InputInt2("Tile size", &m_tileSize.x);
 				ImGui::Spacing();
@@ -208,18 +189,18 @@ namespace px
 				
 				if (ImGui::Button("Open texture.."))
 				{
-					// TODO: Add functionality to open a texture
+					if (hasSelectedTileSize())
+						openTextureFile();
+					else
+						std::cout << "Please choose a tile size before opening a texture" << std::endl;
 				}
 
 				ImGui::SameLine();
 
 				if (ImGui::Button("Edit sprite sheet"))
 				{
-					// The texture must have been loaded first
-					if (m_spritesheet.getSize().x > 0 && m_spritesheet.getSize().y > 0)
-					{
+					if (hasLoadedTexture() && hasSelectedTileSize())
 						m_showSpriteSheet = true;
-					}
 				}
 				ImGui::Spacing();
 			}
@@ -396,23 +377,23 @@ namespace px
 
 		// Draw grid
 		auto draw_list = ImGui::GetWindowDrawList();
-		const auto tileSize = 64.f;
-		const auto xTiles = m_spritesheet.getSize().x / static_cast<unsigned>(tileSize);
-		const auto yTiles = m_spritesheet.getSize().y / static_cast<unsigned>(tileSize);
+		const auto xTiles = m_spritesheet.getSize().x / static_cast<unsigned>(m_tileSize.x);
+		const auto yTiles = m_spritesheet.getSize().y / static_cast<unsigned>(m_tileSize.y);
+		const auto tileSize = sf::Vector2f(static_cast<float>(m_tileSize.x), static_cast<float>(m_tileSize.y));
 
 		// Draw horizontal lines
 		for (unsigned x = 0; x < xTiles + 1; ++x) 
 		{
-			draw_list->AddLine(ImVec2(tilesetImagePos.x + x * tileSize, tilesetImagePos.y),
-							   ImVec2(tilesetImagePos.x + x * tileSize, tilesetImagePos.y + yTiles * tileSize),
+			draw_list->AddLine(ImVec2(tilesetImagePos.x + x * tileSize.x, tilesetImagePos.y),
+							   ImVec2(tilesetImagePos.x + x * tileSize.x, tilesetImagePos.y + yTiles * tileSize.y),
 							   ImColor(255, 255, 255));
 		}
 
 		// Draw vertical lines
 		for (unsigned y = 0; y < yTiles + 1; ++y) 
 		{
-			draw_list->AddLine(ImVec2(tilesetImagePos.x, tilesetImagePos.y + y * tileSize),
-							   ImVec2(tilesetImagePos.x + xTiles * tileSize, tilesetImagePos.y + y * tileSize),
+			draw_list->AddLine(ImVec2(tilesetImagePos.x, tilesetImagePos.y + y * tileSize.y),
+							   ImVec2(tilesetImagePos.x + xTiles * tileSize.x, tilesetImagePos.y + y * tileSize.y),
 							   ImColor(255, 255, 255));
 		}
 
@@ -422,8 +403,8 @@ namespace px
 			if (ImGui::IsMouseClicked(0)) 
 			{
 				auto relMousePos = sf::Vector2f(ImGui::GetMousePos()) - tilesetImagePos;
-				m_selectedTile = sf::Vector2f(std::floor(relMousePos.x / tileSize) * tileSize, std::floor(relMousePos.y / tileSize) * tileSize);
-				index = static_cast<unsigned>(std::floor(relMousePos.x / tileSize) + std::floor(relMousePos.y / tileSize) * xTiles);
+				m_selectedTile = sf::Vector2f(std::floor(relMousePos.x / tileSize.x) * tileSize.x, std::floor(relMousePos.y / tileSize.y) * tileSize.y);
+				index = static_cast<unsigned>(std::floor(relMousePos.x / tileSize.x) + std::floor(relMousePos.y / tileSize.y) * xTiles);
 
 				// Copy name to vector as the default buffer size is too small
 				spriteName.clear();
@@ -448,11 +429,66 @@ namespace px
 	
 		// Highlight selected tile on spritesheet
 		sf::Vector2f selectedTileTL = sf::Vector2f(m_selectedTile.x, m_selectedTile.y);
-		sf::Vector2f selectedTileBR = sf::Vector2f(m_selectedTile.x + tileSize + 1.f, m_selectedTile.y + tileSize + 1.f);
+		sf::Vector2f selectedTileBR = sf::Vector2f(m_selectedTile.x + tileSize.x + 1.f, m_selectedTile.y + tileSize.y + 1.f);
 		selectedTileTL += tilesetImagePos;
 		selectedTileBR += tilesetImagePos;
 
 		draw_list->AddRect(selectedTileTL, selectedTileBR, ImColor(255, 0, 0));
+	}
+
+	// File browser for selecting a sprite sheet
+	void Application::openTextureFile()
+	{
+		nfdchar_t* outPath = NULL;
+		nfdresult_t result = NFD_OpenDialog("png,jpg", NULL, &outPath);
+
+		if (result == NFD_OKAY)
+		{
+			m_texturePath = outPath;
+			std::replace(m_texturePath.begin(), m_texturePath.end(), '\\', '/');
+			auto found = m_texturePath.find_last_of("/");
+			free(outPath);
+
+			if (m_spritesheet.loadFromFile(m_texturePath))
+			{
+				// Don't load the same spritesheet again and reset the data?
+				m_sprite.setTexture(m_spritesheet);
+
+				const auto rows = m_spritesheet.getSize().x / m_tileSize.x;
+				const auto cols = m_spritesheet.getSize().y / m_tileSize.y;
+				unsigned int index = 0;
+
+				// Allocate size
+				m_tiles.resize(cols * rows);
+
+				for (unsigned y = 0; y < cols; ++y)
+				{
+					for (unsigned x = 0; x < rows; ++x)
+					{
+						m_tiles[index] = { "image" + std::to_string(index),
+											sf::FloatRect(static_cast<float>(x * m_tileSize.x), static_cast<float>(y * m_tileSize.y),
+											static_cast<float>(m_tileSize.x), static_cast<float>(m_tileSize.y)) };
+						index++;
+					}
+				}
+			}
+			else
+				std::cout << "Failed to load texture: " << m_texturePath << std::endl;
+		}
+		else if (result == NFD_CANCEL)
+			printf("User pressed cancel.\n");
+		else
+			printf("Error: %s\n", NFD_GetError());
+	}
+
+	const bool Application::hasLoadedTexture() const
+	{
+		return m_spritesheet.getSize().x > 0 && m_spritesheet.getSize().y > 0 ? true : false;
+	}
+
+	const bool Application::hasSelectedTileSize() const
+	{
+		return m_tileSize.x > 0 && m_tileSize.y > 0 ? true : false;
 	}
 
 	void Application::addAnimation(const std::string& id, const thor::FrameAnimation& anim, float duration)
