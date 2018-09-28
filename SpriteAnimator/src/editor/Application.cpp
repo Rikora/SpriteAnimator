@@ -22,7 +22,8 @@ namespace px
 	sf::ContextSettings(0U, 0U, 8U)),
 	m_animator(m_spriteAnimations),
 	m_selectedTile(0.f, 0.f),
-	m_tileSize(0, 0)
+	m_tileSize(0, 0),
+	m_playingAnimation("None")
 	{
 		m_window.setPosition(sf::Vector2i(225, 90));
 		m_window.setVerticalSyncEnabled(true);
@@ -34,7 +35,7 @@ namespace px
 
 		m_actions["close"] = eventClosed || close;
 
-		// Load textures (should not be here later...)
+		// Load button textures
 		m_playButtonTexture.loadFromFile("src/res/icons/play_button.png");
 		m_pauseButtonTexture.loadFromFile("src/res/icons/pause_button.png");
 
@@ -99,6 +100,15 @@ namespace px
 	{
 		static std::vector<char> animationName(50);
 
+		// Display current playing animation
+		ImGui::SetNextWindowPos(ImVec2(700, 22));
+		ImGui::Begin("Overlay", NULL, ImVec2(340, 0), 0.3f, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+															ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
+		ImGui::Spacing();
+		ImGui::Text("Playing Animation: %s", m_playingAnimation.c_str());
+		ImGui::Spacing();
+		ImGui::End();
+
 		if (ImGui::BeginMainMenuBar())
 		{
 			if (ImGui::BeginMenu("File"))
@@ -110,9 +120,18 @@ namespace px
 															  ImGuiWindowFlags_NoBringToFrontOnFocus);
 			addAnimationsToGUI();
 
-			ImGui::SetNextTreeNodeOpen(true);
-			if (ImGui::CollapsingHeader("Animations"))
+			if (ImGui::CollapsingHeader("Animations", ImGuiTreeNodeFlags_DefaultOpen))
 			{
+				auto submitAnimation = [this](std::size_t size)
+				{
+					if (animationName[0] != '\0' && hasLoadedTexture())
+						m_animations.insert(std::make_pair(animationName.data(), AnimationInfo()));
+
+					// Clear vector and resize
+					animationName.clear();
+					animationName.resize(size);
+				};
+
 				ImGui::PushItemWidth(140);
 				ImGui::Spacing();
 				ImGui::Spacing();
@@ -120,19 +139,19 @@ namespace px
 				ImGui::SameLine();
 
 				// Enter animation name
-				ImGui::InputText("##1", animationName.data(), animationName.size(), ImGuiInputTextFlags_CharsNoBlank);
+				if (ImGui::InputText("##1", animationName.data(), animationName.size(), ImGuiInputTextFlags_CharsNoBlank | 
+																						ImGuiInputTextFlags_EnterReturnsTrue))
+				{
+					submitAnimation(50);
+				}
 				ImGui::PopItemWidth();
 
 				ImGui::SameLine(ImGui::GetWindowWidth() - 60);
 				if (ImGui::Button("NEW"))
 				{
-					if(animationName[0] != '\0' && hasLoadedTexture())
-						m_animations.insert(std::make_pair(animationName.data(), AnimationInfo()));
-
-					// Clear vector and resize
-					animationName.clear();
-					animationName.resize(50);
+					submitAnimation(50);
 				}
+
 				ImGui::Spacing();
 				ImGui::Spacing();
 				ImGui::Separator();
@@ -174,8 +193,7 @@ namespace px
 			}
 
 			// Properties for sprite sheet
-			ImGui::SetNextTreeNodeOpen(true);
-			if (ImGui::CollapsingHeader("Sprite Sheet"))
+			if (ImGui::CollapsingHeader("Sprite Sheet", ImGuiTreeNodeFlags_DefaultOpen))
 			{
 				// Tile size cannot be manipulated after the texture have been loaded with the tile size
 				ImGui::Spacing();
@@ -226,147 +244,148 @@ namespace px
 
 	void Application::addAnimationsToGUI()
 	{
-		// Note: This can't be done before one has chosen a sprite sheet...
 		unsigned int i = 1;
 		for (auto& animation : m_animations)
 		{
-			ImGui::Spacing();
-			ImGui::Text("Animation: %s", animation.first.c_str());
-			ImGui::PushID(i);
-			ImGui::SameLine(ImGui::GetWindowWidth() - 57);
-
-			// Remove animation
-			if (ImGui::Button("X", ImVec2(20, 20)))
+			if (ImGui::CollapsingHeader(animation.first.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				if (animation.second.submitted)
+				ImGui::Spacing();
+				ImGui::PushID(i);
+
+				ImGui::Spacing();
+				ImGui::PushItemWidth(150);
+				if (ImGui::InputFloat("Duration", &animation.second.duration, 0.1f))
 				{
-					m_animator.stop();
-					animation.second.framesDetail.clear();
-					m_spriteAnimations.removeAnimation(animation.first);
+					if (animation.second.submitted && !animation.second.framesDetail.empty())
+					{
+						utils::constrainNegativesFloat(animation.second.duration, 0.01f);
+						m_animator.stop();
+						m_spriteAnimations.setDuration(animation.first, animation.second.duration);
+						playAnimation(animation.first, true);
+					}
+				}
+				ImGui::PopItemWidth();
+				utils::constrainNegativesFloat(animation.second.duration, 0.01f);
+
+				// Remove animation
+				ImGui::SameLine(ImGui::GetWindowWidth() - 57);
+				if (ImGui::Button("X", ImVec2(20, 20)))
+				{
+					if (animation.second.submitted)
+					{
+						m_animator.stop();
+						animation.second.framesDetail.clear();
+						m_spriteAnimations.removeAnimation(animation.first);
+						m_playingAnimation = "None";
+					}
+
+					m_animations.erase(animation.first);
+					ImGui::PopID();
+					return;
 				}
 
-				m_animations.erase(animation.first);
-				ImGui::PopID();
-				return;
-			}
-
-			ImGui::Spacing();
-			ImGui::PushItemWidth(150);
-			if (ImGui::InputFloat("Duration", &animation.second.duration, 0.1f))
-			{
-				if (animation.second.submitted && !animation.second.framesDetail.empty())
+				unsigned int p = 1;
+				for (auto& frame : animation.second.framesDetail)
 				{
-					utils::constrainNegativesFloat(animation.second.duration, 0.01f);
-					m_animator.stop();
-					m_spriteAnimations.setDuration(animation.first, animation.second.duration);
-					playAnimation(animation.first, true);
+					ImGui::Spacing();
+					ImGui::Spacing();
+					ImGui::Separator();
+					ImGui::Spacing();
+					ImGui::Spacing();
+					ImGui::PushID(p);
+
+					// Update sprite index for frame animation
+					ImGui::PushItemWidth(150);
+					ImGui::Combo("Sprite", &frame.spriteIndex, m_tiles);
+					ImGui::SameLine(ImGui::GetWindowWidth() - 57);
+
+					// Remove frame
+					if (ImGui::Button("X", ImVec2(20, 20)))
+					{
+						animation.second.framesDetail.erase(animation.second.framesDetail.begin() + (p - 1));
+
+						if (animation.second.framesDetail.empty() && animation.second.submitted)
+						{
+							m_animator.stop();
+							m_spriteAnimations.removeAnimation(animation.first);
+							animation.second.submitted = false; // Animation can now be added again
+						}
+
+						if (animation.second.submitted && !animation.second.framesDetail.empty())
+						{
+							animation.second.frameAnimation = thor::FrameAnimation();
+
+							// Supply info to the frame animations vector
+							for (unsigned i = 0; i < animation.second.framesDetail.size(); ++i)
+							{
+								addFrameAnimation(animation.second.frameAnimation,
+									m_tiles[animation.second.framesDetail[i].spriteIndex].tile,
+									animation.second.framesDetail[i].duration);
+							}
+						}
+					}
+
+					// Note: This is a relative duration compared to the animation duration
+					ImGui::Spacing();
+					ImGui::InputFloat("Duration", &frame.duration, 0.1f);
+					ImGui::PopItemWidth();
+					utils::constrainNegativesFloat(frame.duration);
+					ImGui::PopID();
+					p++;
 				}
-			}
-			ImGui::PopItemWidth();
 
-			utils::constrainNegativesFloat(animation.second.duration, 0.01f);
-
-			unsigned int p = 1;
-			for (auto& frame : animation.second.framesDetail)
-			{
 				ImGui::Spacing();
 				ImGui::Spacing();
 				ImGui::Separator();
 				ImGui::Spacing();
 				ImGui::Spacing();
-				ImGui::PushID(p);
 
-				// Update sprite index for frame animation
-				ImGui::PushItemWidth(150);
-				ImGui::Combo("Sprite", &frame.spriteIndex, m_tiles);
+				// Add frame animation
 				ImGui::SameLine(ImGui::GetWindowWidth() - 57);
-
-				// Remove frame
-				if (ImGui::Button("X", ImVec2(20, 20)))
+				if (ImGui::Button("+", ImVec2(20, 20)))
 				{
-					animation.second.framesDetail.erase(animation.second.framesDetail.begin() + (p - 1));
+					animation.second.framesDetail.push_back({});
+				}
 
-					if (animation.second.framesDetail.empty() && animation.second.submitted)
-					{
-						m_animator.stop();
-						m_spriteAnimations.removeAnimation(animation.first);
-						animation.second.submitted = false; // Animation can now be added again
-					}
+				ImGui::Spacing();
+				ImGui::Separator();
+				ImGui::Spacing();
+				ImGui::Spacing();
+				ImGui::SameLine(ImGui::GetWindowWidth() - 230);
 
-					if (animation.second.submitted && !animation.second.framesDetail.empty())
+				if (ImGui::Button("SUBMIT"))
+				{
+					if (!animation.second.framesDetail.empty())
 					{
-						animation.second.frameAnimation = thor::FrameAnimation();
+						// Clear the frame animation object when submitting again for new changes to take place
+						if (animation.second.submitted)
+							animation.second.frameAnimation = thor::FrameAnimation();
 
 						// Supply info to the frame animations vector
 						for (unsigned i = 0; i < animation.second.framesDetail.size(); ++i)
 						{
 							addFrameAnimation(animation.second.frameAnimation,
-											  m_tiles[animation.second.framesDetail[i].spriteIndex].tile,
-											  animation.second.framesDetail[i].duration);
+								m_tiles[animation.second.framesDetail[i].spriteIndex].tile,
+								animation.second.framesDetail[i].duration);
+						}
+
+						// Add the final animation to the container
+						if (!animation.second.submitted)
+						{
+							addAnimation(animation.first, animation.second.frameAnimation, animation.second.duration);
+							playAnimation(animation.first, true);
+							animation.second.submitted = true;
+							m_playingAnimation = animation.first;
 						}
 					}
 				}
 
-				// Note: This is a relative duration compared to the animation duration
 				ImGui::Spacing();
-				ImGui::InputFloat("Duration", &frame.duration, 0.1f);
-				ImGui::PopItemWidth();
-				utils::constrainNegativesFloat(frame.duration);
+				ImGui::Separator();
+				ImGui::Spacing();
 				ImGui::PopID();
-				p++;
-			}
-
-			ImGui::Spacing();
-			ImGui::Spacing();
-			ImGui::Separator();
-			ImGui::Spacing();
-			ImGui::Spacing();
-
-			// Add frame animation
-			ImGui::SameLine(ImGui::GetWindowWidth() - 57);
-			if (ImGui::Button("+", ImVec2(20, 20)))
-			{
-				animation.second.framesDetail.push_back({});
-			}
-
-			ImGui::Spacing();
-			ImGui::Separator();
-			ImGui::Spacing();
-			ImGui::Spacing();
-			ImGui::SameLine(ImGui::GetWindowWidth() - 230);
-
-			if (ImGui::Button("SUBMIT"))
-			{
-				if (!animation.second.framesDetail.empty())
-				{
-					// Clear the frame animation object when submitting again for new changes to take place
-					if (animation.second.submitted)
-						animation.second.frameAnimation = thor::FrameAnimation();
-
-					// Supply info to the frame animations vector
-					for (unsigned i = 0; i < animation.second.framesDetail.size(); ++i)
-					{
-						addFrameAnimation(animation.second.frameAnimation,
-										  m_tiles[animation.second.framesDetail[i].spriteIndex].tile,
-										  animation.second.framesDetail[i].duration);
-					}
-
-					// Add the final animation to the container
-					if (!animation.second.submitted)
-					{
-						addAnimation(animation.first, animation.second.frameAnimation, animation.second.duration);
-						playAnimation(animation.first, true);
-						animation.second.submitted = true;
-						m_playingAnimation = animation.first;
-					}
-				}
-			}
-
-			ImGui::Spacing();
-			ImGui::Separator();
-			ImGui::Spacing();
-			ImGui::PopID();
-			i++;
+				i++;
+			}		
 		}
 	}
 
@@ -463,7 +482,6 @@ namespace px
 
 			if (m_spritesheet.loadFromFile(m_texturePath))
 			{
-				// Don't load the same spritesheet again and reset the data?
 				m_sprite.setTexture(m_spritesheet);
 
 				const auto rows = m_spritesheet.getSize().x / m_tileSize.x;
