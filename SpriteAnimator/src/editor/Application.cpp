@@ -177,22 +177,23 @@ namespace px
 			ImGui::SetNextTreeNodeOpen(true);
 			if (ImGui::CollapsingHeader("Sprite Sheet"))
 			{
-				// Need to lock this variable if the user wants to change the tile size after!
+				// Tile size cannot be manipulated after the texture have been loaded with the tile size
 				ImGui::Spacing();
-				ImGui::InputInt2("Tile size", &m_tileSize.x);
+				ImGui::Spacing();
+				ImGui::InputInt2("Tile size", &m_tileSize.x, hasLoadedTexture() ? ImGuiInputTextFlags_ReadOnly : 0);
 				ImGui::Spacing();
 				utils::constrainNegativesVec(m_tileSize);
 
+				ImGui::Spacing();
 				ImGui::Spacing();
 				ImGui::Image(m_spritesheet, sf::Vector2f(300.f, 300.f), sf::Color::White, sf::Color::White);
 				ImGui::Spacing();
 				
 				if (ImGui::Button("Open texture.."))
 				{
-					if (hasSelectedTileSize())
+					// Tile size must be chosen first and texture can't be selected again when everything is generated
+					if (!hasLoadedTexture() && hasSelectedTileSize())
 						openTextureFile();
-					else
-						std::cout << "Please choose a tile size before opening a texture" << std::endl;
 				}
 
 				ImGui::SameLine();
@@ -203,6 +204,8 @@ namespace px
 						m_showSpriteSheet = true;
 				}
 				ImGui::Spacing();
+				ImGui::Spacing();
+				ImGui::Separator();
 			}
 
 			ImGui::Spacing();
@@ -251,7 +254,6 @@ namespace px
 			ImGui::PushItemWidth(150);
 			if (ImGui::InputFloat("Duration", &animation.second.duration, 0.1f))
 			{
-				// This is a bit unstable and can freeze the editor sometimes?
 				if (animation.second.submitted && !animation.second.framesDetail.empty())
 				{
 					utils::constrainNegativesFloat(animation.second.duration, 0.01f);
@@ -371,8 +373,18 @@ namespace px
 	void Application::drawGrid()
 	{
 		static unsigned index = 0;
+		static bool firstTime = true;
 		static std::vector<char> spriteName(50);
 		const sf::Vector2f tilesetImagePos = ImGui::GetCursorScreenPos();
+
+		// Set the selected tile to image0 when browsing for the first time
+		if (firstTime)
+		{
+			for (unsigned i = 0; i < std::string("image0").size(); ++i)
+				spriteName[i] = m_tiles[0].name[i];
+			firstTime = false;
+		}
+
 		ImGui::Image(m_spritesheet);
 
 		// Draw grid
