@@ -552,17 +552,18 @@ namespace px
 			for (auto animation : m_animations)
 			{
 				json data;
-				data[animation.first]["id"] = animation.first;
-				data[animation.first]["duration"] = animation.second.duration;
+				data["id"] = animation.first;
+				data["duration"] = animation.second.duration;
+				data["frames"] = animation.second.framesDetail.size();
 					
 				for (unsigned i = 0; i < animation.second.framesDetail.size(); ++i)
 				{
-					data[animation.first]["frame"][i]["floatRect"] = { 
+					data["frame"][i]["floatRect"] = { 
 					  m_tiles[animation.second.framesDetail[i].spriteIndex].tile.left,
 					  m_tiles[animation.second.framesDetail[i].spriteIndex].tile.top,
 					  m_tiles[animation.second.framesDetail[i].spriteIndex].tile.width,
 					  m_tiles[animation.second.framesDetail[i].spriteIndex].tile.height };
-					data[animation.first]["frame"][i]["duration"] = animation.second.framesDetail[i].duration;
+					data["frame"][i]["duration"] = animation.second.framesDetail[i].duration;
 				}
 
 				const auto fullPath = folderPath + "/" + animation.first + ".anim";

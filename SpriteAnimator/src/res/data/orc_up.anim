@@ -1,0 +1,43 @@
+{
+    "duration": 1.0,
+    "frame": [
+        {
+            "duration": 1.0,
+            "floatRect": [
+                0.0,
+                0.0,
+                64.0,
+                64.0
+            ]
+        },
+        {
+            "duration": 1.0,
+            "floatRect": [
+                64.0,
+                0.0,
+                64.0,
+                64.0
+            ]
+        },
+        {
+            "duration": 1.0,
+            "floatRect": [
+                128.0,
+                0.0,
+                64.0,
+                64.0
+            ]
+        },
+        {
+            "duration": 1.0,
+            "floatRect": [
+                192.0,
+                0.0,
+                64.0,
+                64.0
+            ]
+        }
+    ],
+    "frames": 4,
+    "id": "orc_up"
+}

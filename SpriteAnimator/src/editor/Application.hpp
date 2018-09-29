@@ -39,6 +39,7 @@ namespace px
 		void updateAnimation(sf::Time dt);
 
 	private:
+		// Types
 		using AnimationsHolder = thor::AnimationMap<sf::Sprite, std::string>;
 		using Animator = thor::Animator<sf::Sprite, std::string>;
 
