@@ -489,7 +489,7 @@ namespace px
 
 		if (result == NFD_OKAY)
 		{
-			m_texturePath = outPath;
+			std::string m_texturePath = outPath;
 			std::replace(m_texturePath.begin(), m_texturePath.end(), '\\', '/');
 			auto found = m_texturePath.find_last_of("/");
 			free(outPath);
@@ -569,6 +569,7 @@ namespace px
 				const auto fullPath = folderPath + "/" + animation.first + ".anim";
 				std::ofstream o(fullPath);
 				o << std::setw(4) << data << std::endl;
+				std::cout << "Wrote to file " << fullPath << std::endl;
 			}
 		}
 	}
