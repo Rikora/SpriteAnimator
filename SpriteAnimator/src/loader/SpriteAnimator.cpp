@@ -43,10 +43,10 @@ namespace px
 		addAnimation(data["id"], anim, data["duration"]);
 	}
 
-	void SpriteAnimator::removeAnimation(const std::string & id)
+	/*void SpriteAnimator::removeAnimation(const std::string & id)
 	{
 		m_animations.removeAnimation(id);
-	}
+	}*/
 
 	void SpriteAnimator::playAnimation(const std::string& id, bool repeat)
 	{

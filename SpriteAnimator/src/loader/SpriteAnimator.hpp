@@ -22,7 +22,7 @@ namespace px
 	public:
 		void update(sf::Sprite& animated, sf::Time dt);
 		void loadAnimation(const std::string& animation);
-		void removeAnimation(const std::string& id);
+		//void removeAnimation(const std::string& id);
 		void playAnimation(const std::string& id, bool repeat = false);
 		void stop();
 
