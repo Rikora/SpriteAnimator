@@ -22,10 +22,12 @@ namespace px
 	private:
 		void drawGrid();
 		void addAnimationsToGUI();
-		void openTextureFile();
 		void pollEvents();
 		void update(sf::Time dt);
 		void updateGUI();
+		void openTextureFile();
+		void saveAnimations();
+		void outputAnimationData(const std::string& folderPath);
 		const bool hasLoadedTexture() const;
 		const bool hasSelectedTileSize() const;
 

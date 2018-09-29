@@ -8,7 +8,12 @@
 #include <imgui.h>
 #include <imgui-SFML.h>
 #include <iostream>
+#include <fstream>
+#include <iomanip>
 #include <nfd.h>
+#include <json.hpp>
+
+using namespace nlohmann;
 
 namespace px
 {
@@ -32,8 +37,11 @@ namespace px
 		// Supply actions to the action map
 		thor::Action eventClosed(sf::Event::Closed);
 		thor::Action close(sf::Keyboard::Escape, thor::Action::PressOnce);
+		thor::Action ctrl(sf::Keyboard::LControl, thor::Action::Hold);
+		thor::Action save(sf::Keyboard::S, thor::Action::PressOnce);
 
 		m_actions["close"] = eventClosed || close;
+		m_actions["saveFiles"] = ctrl && save;
 
 		// Load button textures
 		m_playButtonTexture.loadFromFile("src/res/icons/play_button.png");
@@ -74,6 +82,8 @@ namespace px
 		// React to different action types
 		if (m_actions.isActive("close"))
 			m_window.close();
+		if (m_actions.isActive("saveFiles"))
+			saveAnimations();
 	}
 
 	void Application::update(sf::Time dt)
@@ -113,6 +123,10 @@ namespace px
 		{
 			if (ImGui::BeginMenu("File"))
 			{
+				if (ImGui::MenuItem("Save all..", "CTRL+S"))
+				{
+					saveAnimations();
+				}
 				ImGui::EndMenu();
 			}
 
@@ -450,7 +464,7 @@ namespace px
 		ImGui::Text("Name:");
 		ImGui::SameLine();
 
-		if (ImGui::InputText("", spriteName.data(), spriteName.size(), ImGuiInputTextFlags_EnterReturnsTrue))
+		if (ImGui::InputText("", spriteName.data(), spriteName.size(), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_EnterReturnsTrue))
 		{
 			m_tiles[index].name = spriteName.data();
 		}
@@ -497,7 +511,7 @@ namespace px
 					{
 						m_tiles[index] = { "image" + std::to_string(index),
 											sf::FloatRect(static_cast<float>(x * m_tileSize.x), static_cast<float>(y * m_tileSize.y),
-											static_cast<float>(m_tileSize.x), static_cast<float>(m_tileSize.y)) };
+														  static_cast<float>(m_tileSize.x), static_cast<float>(m_tileSize.y)) };
 						index++;
 					}
 				}
@@ -509,6 +523,53 @@ namespace px
 			printf("User pressed cancel.\n");
 		else
 			printf("Error: %s\n", NFD_GetError());
+	}
+
+	// File browser for selecting a save folder
+	void Application::saveAnimations()
+	{
+		nfdchar_t *outPath = NULL;
+		nfdresult_t result = NFD_PickFolder(NULL, &outPath);
+
+		if (result == NFD_OKAY)
+		{
+			std::string folderPath = outPath;
+			std::replace(folderPath.begin(), folderPath.end(), '\\', '/');
+			outputAnimationData(folderPath);
+			free(outPath);
+		}
+		else if (result == NFD_CANCEL)
+			printf("User pressed cancel.\n");
+		else
+			printf("Error: %s\n", NFD_GetError());
+	}
+
+	// Write animation data to animation files
+	void Application::outputAnimationData(const std::string& folderPath)
+	{
+		if (m_spriteAnimations.getSize() != 0)
+		{
+			for (auto animation : m_animations)
+			{
+				json data;
+				data[animation.first]["id"] = animation.first;
+				data[animation.first]["duration"] = animation.second.duration;
+					
+				for (unsigned i = 0; i < animation.second.framesDetail.size(); ++i)
+				{
+					data[animation.first]["frame"][i]["floatRect"] = { 
+					  m_tiles[animation.second.framesDetail[i].spriteIndex].tile.left,
+					  m_tiles[animation.second.framesDetail[i].spriteIndex].tile.top,
+					  m_tiles[animation.second.framesDetail[i].spriteIndex].tile.width,
+					  m_tiles[animation.second.framesDetail[i].spriteIndex].tile.height };
+					data[animation.first]["frame"][i]["duration"] = animation.second.framesDetail[i].duration;
+				}
+
+				const auto fullPath = folderPath + "/" + animation.first + ".anim";
+				std::ofstream o(fullPath);
+				o << std::setw(4) << data << std::endl;
+			}
+		}
 	}
 
 	const bool Application::hasLoadedTexture() const
